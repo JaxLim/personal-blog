@@ -5,11 +5,14 @@ import LatestActivity from '../components/LatestActivity.astro';
 import PostList from '../components/PostList.astro';
 import RepoLedger from '../components/RepoLedger.astro';
 import GitHubData from '../components/GitHubData.astro';
+import SectionHead from '../components/SectionHead.astro';
+import WorkCard from '../components/work/WorkCard.astro';
 import { getProjectData } from '../lib/projects';
 import { getHomePosts, getPosts } from '../lib/posts';
 import { localePath, type Locale } from '../i18n/config';
 import { useTranslations } from '../i18n/ui';
-import { site } from '../site.config';
+import { profileLinks, site } from '../site.config';
+import { caseStudies } from '../work';
 
 interface Props {
   locale: Locale;
@@ -17,64 +20,144 @@ interface Props {
 
 const { locale } = Astro.props;
 const t = useTranslations(locale);
-const [data, posts, all] = await Promise.all([getProjectData(), getHomePosts(locale, 5), getPosts(locale)]);
+const [data, posts, all] = await Promise.all([getProjectData(), getHomePosts(locale, 4), getPosts(locale)]);
 const repos = data.repos.slice(0, site.github.homeCount);
 const status = site.status[locale];
+const lines = site.headline[locale];
+const github = site.github.username ? `https://github.com/${site.github.username}` : null;
+
+// The full stop at the end of the headline is set in the accent colour: the live dot, at rest.
+const last = lines.at(-1) ?? '';
+const stop = /[.。]$/.test(last) ? last.slice(-1) : '';
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: site.name,
+  jobTitle: t.meta.role,
   url: new URL(localePath(locale, '/'), Astro.site).href,
   description: site.description[locale],
-  sameAs: [
-    ...(site.github.username ? [`https://github.com/${site.github.username}`] : []),
-    ...site.links.map((l) => l.href),
-  ],
+  sameAs: profileLinks().map((l) => l.href),
 };
 ---
 
 <Base locale={locale} jsonLd={jsonLd}>
-  <section class="hero page" aria-labelledby="hero-name">
-    <h1 class="hero__name" id="hero-name" translate="no">{site.name}</h1>
-    <div class="hero__intro">
-      <p class="hero__tagline">{site.tagline[locale]}</p>
+  <section class="hero page" aria-labelledby="hero-title">
+    <div class="hero__top" data-reveal="fade">
+      <p class="label"><span translate="no">{site.name}</span> — {t.meta.role}</p>
       {
         status && (
-          <p class="hero__status">
-            <span class="hero__status-dot" aria-hidden="true" />
+          <p class="hero__status label">
+            <span class="live-dot" aria-hidden="true" />
             {status}
           </p>
         )
       }
     </div>
-    <div class="hero__pulse">
-      <Pulse data={data} locale={locale} />
-      <LatestActivity data={data} locale={locale} />
+
+    <h1 class="hero__title" id="hero-title" data-lines>
+      {
+        lines.map((line, i) => (
+          <span class="line">
+            <span>
+              {i === lines.length - 1 && stop ? (
+                <>
+                  {line.slice(0, -1)}
+                  <i class="hero__stop">{stop}</i>
+                </>
+              ) : (
+                line
+              )}
+            </span>
+          </span>
+        ))
+      }
+    </h1>
+
+    <div class="hero__foot">
+      <p class="hero__tagline" data-reveal style="--reveal-delay:420">{site.tagline[locale]}</p>
+      <div class="hero__actions" data-reveal style="--reveal-delay:520">
+        <a class="btn" href="#work">
+          <span class="roll"><span data-text={t.home.ctaWork}>{t.home.ctaWork}</span></span>
+          <svg class="btn__icon btn__icon--down" viewBox="0 0 14 14" aria-hidden="true">
+            <path d="M7 2v10M3 8l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </a>
+        <a class="btn btn--ghost" href={localePath(locale, '/writing/')}>
+          <span class="roll"><span data-text={t.home.ctaWriting}>{t.home.ctaWriting}</span></span>
+        </a>
+      </div>
     </div>
   </section>
 
-  <div class="page">
-    <section class="rail" aria-labelledby="writing-title">
-      <div class="rail__head">
-        <h2 class="rail__title" id="writing-title">{t.nav.writing}</h2>
-        <p class="rail__note">{t.home.writingNote}</p>
-        <a class="rail__more link" href={localePath(locale, '/writing/')}>
-          {all.length > posts.length ? t.home.allPosts(all.length) : t.home.archive}
-        </a>
-      </div>
-      <PostList posts={posts} locale={locale} />
-    </section>
+  <section class="signal page" aria-labelledby="signal-title" data-reveal style="--reveal-delay:640">
+    <div class="signal__head">
+      <h2 class="label" id="signal-title">
+        <span class="live-dot" aria-hidden="true"></span>
+        {
+          github ? (
+            <a href={github} rel="me noopener" class="signal__source">
+              {t.home.signal} · <span translate="no">@{site.github.username}</span>
+            </a>
+          ) : (
+            t.home.signal
+          )
+        }
+      </h2>
+      {data.yearTotal ? <p class="label">{t.pulse.year(data.yearTotal)}</p> : null}
+    </div>
+    <Pulse data={data} locale={locale} />
+    <LatestActivity data={data} locale={locale} />
+  </section>
 
-    <section class="rail" aria-labelledby="repos-title">
-      <div class="rail__head">
-        <h2 class="rail__title" id="repos-title">{t.home.repos}</h2>
-        <p class="rail__note">{t.home.reposNote}</p>
-        <a class="rail__more link" href={localePath(locale, '/projects/')}>{t.home.allProjects}</a>
-      </div>
-      <RepoLedger repos={repos} locale={locale} />
-    </section>
+  <section class="section page" id="work" aria-labelledby="work-title">
+    <SectionHead index="01" label={t.home.work} id="work-title" title={t.home.work} note={t.home.workNote} />
+    <div class="work-list">
+      {caseStudies.map((study, i) => <WorkCard study={study} locale={locale} index={i} />)}
+    </div>
+  </section>
+
+  <div class="toolbox" aria-label={t.home.toolbox} role="region">
+    <div class="marquee">
+      {
+        [0, 1].map((copy) => (
+          <ul class="marquee__track" aria-hidden={copy === 1 ? 'true' : undefined}>
+            {site.toolbox.map((tool) => (
+              <li translate="no">{tool}</li>
+            ))}
+          </ul>
+        ))
+      }
+    </div>
   </div>
+
+  <section class="section page rail-section" aria-labelledby="writing-title">
+    <SectionHead
+      index="02"
+      label={t.home.writing}
+      id="writing-title"
+      title={t.home.writing}
+      note={t.home.writingNote}
+      link={{ href: localePath(locale, '/writing/'), label: all.length > posts.length ? t.home.allPosts(all.length) : t.home.archive }}
+    />
+    <div class="rail-section__body" data-reveal>
+      <PostList posts={posts} locale={locale} />
+    </div>
+  </section>
+
+  <section class="section page rail-section" aria-labelledby="repos-title">
+    <SectionHead
+      index="03"
+      label={t.home.repos}
+      id="repos-title"
+      title={t.home.repos}
+      note={t.home.reposNote}
+      link={{ href: localePath(locale, '/projects/'), label: t.home.allProjects }}
+    />
+    <div class="rail-section__body" data-reveal>
+      <RepoLedger repos={repos} locale={locale} />
+    </div>
+  </section>
 
   <GitHubData data={data} />
 </Base>
@@ -82,74 +165,178 @@ const jsonLd = {
 <style>
   .hero {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    padding-top: clamp(var(--space-8), 11vw, 9rem);
-    padding-bottom: var(--space-8);
+    align-content: end;
+    padding-top: clamp(var(--space-7), 8vw, var(--space-9));
+    padding-bottom: clamp(var(--space-7), 6vw, var(--space-8));
   }
 
-  .hero__name {
-    font-size: var(--step-display);
-    line-height: 0.88;
-    font-weight: 650;
-    letter-spacing: -0.055em;
-    margin-left: -0.055em; /* optical alignment of the capital with the column edge */
-  }
-
-  .hero__intro {
-    margin-top: var(--space-5);
-  }
-
-  .hero__tagline {
-    max-width: 26ch;
-    font-size: clamp(var(--step-1), 1rem + 0.9vw, var(--step-2));
-    line-height: 1.38;
-    letter-spacing: var(--track-heading);
-    color: var(--graphite);
-  }
-
-  :lang(zh) .hero__tagline,
-  :lang(ja) .hero__tagline {
-    max-width: 19em;
-    font-size: clamp(1.0625rem, 0.9rem + 0.6vw, 1.3125rem);
-    line-height: 1.75;
+  .hero__top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-5);
+    margin-bottom: clamp(var(--space-6), 6vw, var(--space-8));
   }
 
   .hero__status {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-2);
-    margin-top: var(--space-5);
-    padding: 0.3rem 0.8rem 0.3rem 0.65rem;
-    border: 1px solid var(--hairline-strong);
-    border-radius: 999px;
-    font-size: var(--step--1);
+    gap: 0.7em;
     color: var(--ink-soft);
   }
 
-  .hero__status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
+  .hero__title {
+    font-size: var(--step-hero);
+    line-height: 0.98;
+    font-weight: 620;
+    letter-spacing: -0.052em;
+    margin-left: -0.04em; /* optical alignment of the first capital */
+    text-wrap: initial;
   }
 
-  .hero__pulse {
-    margin-top: clamp(var(--space-7), 8vw, var(--space-9));
+  :lang(zh) .hero__title,
+  :lang(ja) .hero__title {
+    font-size: clamp(2.3rem, 0.9rem + 5.6vw, 5.5rem);
+    line-height: 1.16;
+    letter-spacing: 0.01em;
+    font-weight: 650;
+    margin-left: -0.02em;
   }
 
-  /* Align the introduction with the content column of the sections below */
+  .hero__stop {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero__foot {
+    display: grid;
+    gap: var(--space-5);
+    margin-top: clamp(var(--space-6), 5vw, var(--space-8));
+  }
+
+  .hero__tagline {
+    max-width: 36rem;
+    font-size: clamp(var(--step-0), 0.9rem + 0.5vw, var(--step-1));
+    line-height: 1.55;
+    color: var(--graphite);
+  }
+
+  :lang(zh) .hero__tagline,
+  :lang(ja) .hero__tagline {
+    max-width: 30em;
+    font-size: var(--step-0);
+    line-height: 1.9;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  /* On larger screens the introduction fills the first view, with the live signal just below */
   @media (min-width: 52rem) {
     .hero {
+      min-height: min(50rem, calc(100svh - var(--header-h) - 11rem));
+    }
+
+    .hero__foot {
+      grid-template-columns: minmax(12rem, 3fr) minmax(0, 9fr);
+      column-gap: var(--space-6);
+      align-items: end;
+    }
+
+    .hero__tagline {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .hero__actions {
+      grid-column: 1;
+      grid-row: 1;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  /* The live signal closes the first screen */
+  .signal {
+    padding-bottom: clamp(var(--space-7), 7vw, var(--space-9));
+  }
+
+  .signal__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+
+  .signal__head h2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7em;
+  }
+
+  .signal__source {
+    color: var(--ink-soft);
+    transition: color var(--dur-fast) ease;
+  }
+
+  .signal__source:hover {
+    color: var(--accent);
+  }
+
+  .work-list {
+    display: grid;
+    gap: clamp(var(--space-5), 3vw, var(--space-6));
+  }
+
+  /* Toolbox: the stack, drifting slowly across a hairline band */
+  .toolbox {
+    border-block: 1px solid var(--hairline);
+    padding-block: var(--space-4);
+    background: var(--paper-tint);
+  }
+
+  .toolbox ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toolbox li {
+    display: inline-flex;
+    align-items: center;
+    gap: 3rem;
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    color: var(--graphite);
+    white-space: nowrap;
+  }
+
+  .toolbox li::after {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--hairline-strong);
+  }
+
+  .toolbox + .section {
+    border-top: 0;
+  }
+
+  /* Content sits in the wide column, under the title */
+  @media (min-width: 52rem) {
+    .rail-section__body {
+      display: grid;
       grid-template-columns: minmax(12rem, 3fr) minmax(0, 9fr);
       column-gap: var(--space-6);
     }
 
-    .hero__name,
-    .hero__pulse {
-      grid-column: 1 / -1;
-    }
-
-    .hero__intro {
+    .rail-section__body > :global(*) {
       grid-column: 2;
     }
   }

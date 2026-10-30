@@ -45,7 +45,7 @@ const isCurrent = (key: string) => path.startsWith(key) || (key === '/writing/' 
                 aria-current={isCurrent(item.key) ? 'page' : undefined}
                 data-nav={item.key}
               >
-                {item.label}
+                <span class="roll"><span data-text={item.label}>{item.label}</span></span>
               </a>
             </li>
           ))
@@ -108,7 +108,14 @@ const isCurrent = (key: string) => path.startsWith(key) || (key === '/writing/' 
     backdrop-filter: saturate(1.6) blur(16px);
     -webkit-backdrop-filter: saturate(1.6) blur(16px);
     border-bottom: 1px solid transparent;
-    transition: border-color var(--dur-base) ease;
+    transition:
+      border-color var(--dur-base) ease,
+      transform 520ms var(--ease-expo);
+  }
+
+  /* Slides away while reading downwards; src/scripts/motion.ts */
+  .header[data-hidden]:not(:focus-within) {
+    transform: translateY(-100%);
   }
 
   .header[data-scrolled],

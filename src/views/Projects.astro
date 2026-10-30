@@ -1,5 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
+import PageIntro from '../components/PageIntro.astro';
+import SectionHead from '../components/SectionHead.astro';
+import WorkCard from '../components/work/WorkCard.astro';
 import RepoLedger from '../components/RepoLedger.astro';
 import Pulse from '../components/Pulse.astro';
 import LatestActivity from '../components/LatestActivity.astro';
@@ -9,6 +12,7 @@ import { compactNumber, relativeTime } from '../lib/format';
 import type { Locale } from '../i18n/config';
 import { useTranslations } from '../i18n/ui';
 import { site } from '../site.config';
+import { caseStudies } from '../work';
 
 interface Props {
   locale: Locale;
@@ -18,66 +22,65 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 const data = await getProjectData();
 const stars = data.repos.reduce((a, r) => a + r.stars, 0);
-const profile = site.github.username ? `https://github.com/${site.github.username}` : null;
+const profile = site.github.username ? `https://github.com/${site.github.username}` : undefined;
 ---
 
 <Base locale={locale} title={t.projects.title} description={t.projects.description}>
-  <div class="page">
-    <header class="intro">
-      <h1 class="intro__title">{t.projects.title}</h1>
-      <p class="intro__lede">{t.projects.lede}</p>
-    </header>
+  <PageIntro label={`${site.name} — ${t.meta.role}`} title={t.projects.title} lede={t.projects.lede} />
 
-    <section class="rail" aria-labelledby="activity-title">
-      <div class="rail__head">
-        <h2 class="rail__title" id="activity-title">{t.projects.activity}</h2>
-        <p class="rail__note">{t.projects.activityNote}</p>
-      </div>
-      <div class="activity">
-        <Pulse data={data} locale={locale} />
-        <LatestActivity data={data} locale={locale} />
-      </div>
-    </section>
+  <section class="section page first" aria-labelledby="studies-title">
+    <SectionHead index="01" label={t.projects.caseStudies} id="studies-title" title={t.projects.caseStudies} note={t.projects.caseStudiesNote} />
+    <div class="work-list">
+      {caseStudies.map((study, i) => <WorkCard study={study} locale={locale} index={i} />)}
+    </div>
+  </section>
 
-    <section class="rail" aria-labelledby="repos-title">
-      <div class="rail__head">
-        <h2 class="rail__title" id="repos-title">{t.home.repos}</h2>
-        <p class="rail__note">{t.projects.summary(data.repos.length, compactNumber(stars, locale))}</p>
-        {
-          profile && (
-            <a class="rail__more link" href={profile} rel="me noopener">
-              {t.projects.viewOnGitHub}
-            </a>
-          )
-        }
-      </div>
-      <div>
-        <RepoLedger repos={data.repos} locale={locale} controls />
-        {
-          !data.sample && (
-            <p class="synced">
-              {t.projects.synced}{' '}
-              <time datetime={data.fetchedAt} data-time data-synced>
-                {relativeTime(data.fetchedAt, locale)}
-              </time>
-            </p>
-          )
-        }
-      </div>
-    </section>
-  </div>
+  <section class="section page" aria-labelledby="activity-title">
+    <SectionHead
+      index="02"
+      label={t.projects.activity}
+      id="activity-title"
+      title={t.projects.activity}
+      note={t.projects.activityNote}
+      link={profile ? { href: profile, label: t.projects.viewOnGitHub } : undefined}
+    />
+    <div data-reveal>
+      <Pulse data={data} locale={locale} />
+      <LatestActivity data={data} locale={locale} />
+    </div>
+  </section>
+
+  <section class="section page" aria-labelledby="repos-title">
+    <SectionHead index="03" label={t.home.repos} id="repos-title" title={t.home.repos} note={t.projects.summary(data.repos.length, compactNumber(stars, locale))} />
+    <div data-reveal>
+      <RepoLedger repos={data.repos} locale={locale} controls />
+      {
+        !data.sample && (
+          <p class="synced label">
+            {t.projects.synced}{' '}
+            <time datetime={data.fetchedAt} data-time data-synced>
+              {relativeTime(data.fetchedAt, locale)}
+            </time>
+          </p>
+        )
+      }
+    </div>
+  </section>
 
   <GitHubData data={data} />
 </Base>
 
 <style>
-  .activity {
-    padding-top: var(--space-6);
+  .first {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .work-list {
+    display: grid;
+    gap: clamp(var(--space-5), 3vw, var(--space-6));
   }
 
   .synced {
-    margin-top: var(--space-4);
-    font-size: var(--step--2);
-    color: var(--graphite);
+    margin-top: var(--space-5);
   }
 </style>

@@ -1,6 +1,6 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
-import { LOCALE_INFO, type Locale } from '../i18n/config';
+import { LOCALE_INFO, localePath, type Locale } from '../i18n/config';
 import { useTranslations } from '../i18n/ui';
 import { site } from '../site.config';
 import { getNativePosts } from './posts';
@@ -11,7 +11,8 @@ export async function feed(locale: Locale, context: APIContext) {
   return rss({
     title: `${site.name}: ${useTranslations(locale).nav.writing}`,
     description: site.description[locale],
-    site: context.site ?? 'https://example.com',
+    // The channel links to this language's home page, including any sub-path.
+    site: new URL(localePath(locale, '/'), context.site ?? 'https://jaxlim.github.io').href,
     items: posts.map(({ post, url }) => ({
       title: post.data.title,
       description: post.data.description,

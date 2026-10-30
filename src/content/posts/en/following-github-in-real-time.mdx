@@ -2,6 +2,7 @@
 title: How this site follows my GitHub in real time
 description: A static site that still feels live. The build takes a snapshot of my GitHub activity, and the browser keeps it current with polite, conditional polling.
 date: 2026-10-29
+updated: 2026-10-30
 tags: [Astro, GitHub API, TypeScript]
 pinned: true
 ---
@@ -14,7 +15,7 @@ This post explains how that works, and why I chose this shape over the alternati
 
 The data arrives in two stages.
 
-1. **At build time**, Astro calls the GitHub API once, collects my repositories and recent events, and renders them straight into the HTML. A visitor with JavaScript turned off still sees a complete page, and search engines index real content.
+1. **Before each build**, a small script calls the GitHub API, merges what it finds with the last saved copy in `src/data/github.json`, and Astro renders that straight into the HTML. A visitor with JavaScript turned off still sees a complete page, and search engines index real content.
 2. **In the browser**, a small module picks up where the snapshot left off. It asks GitHub for anything newer than what the build saw, and folds new activity into the page.
 
 The snapshot is embedded as JSON so the browser doesn't have to fetch it again:
@@ -67,6 +68,22 @@ When the build has a GitHub token, it asks the GraphQL API for the exact contrib
 | --- | --- | --- | --- |
 | Public events API | No | No | Close, from the last 300 events |
 | GraphQL calendar | Yes | If enabled on the profile | Yes |
+
+## When the API changes underneath you
+
+While building this, the most recent pushes on my profile started showing up as “Pushed to main” with no commit message and a count of zero. Nothing in my code had changed. GitHub's events API had stopped including the list of commits in push events.
+
+The fix keeps the cheap path cheap. Each push event still carries the commit it started from and the one it ended on, so the build script asks the compare API for the range between them, but only for the twenty newest pushes, and only once: the result is saved with the event, so later builds don't ask again.
+
+```js title="scripts/fetch-github.mjs"
+const cmp = await gh(`/repos/${repo}/compare/${before}...${head}`);
+event.payload.enriched = {
+  count: cmp.total_commits, // [!code highlight]
+  message: cmp.commits.at(-1)?.commit.message.split('\n')[0] ?? null,
+};
+```
+
+Two other rules came out of the same afternoon. Each source (repositories, events, the contribution calendar) is fetched on its own, and if one fails the saved copy is kept for that source alone. And the saved file is committed, so a build with no network still shows real data, only older. The site never falls back to made-up numbers once a username is set.
 
 ## Keeping the page current between builds
 

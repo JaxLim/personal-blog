@@ -6,7 +6,7 @@
 import { navigate } from 'astro:transitions/client';
 
 interface Entry {
-  type: 'page' | 'post' | 'repo';
+  type: 'page' | 'post' | 'repo' | 'work';
   title: string;
   url: string;
   text?: string;
@@ -86,7 +86,7 @@ function score(entry: Entry, terms: string[]): number {
     else if (text.includes(term)) total += 1;
     else return 0; // every term must match somewhere
   }
-  return total + (entry.type === 'post' ? 0.5 : 0);
+  return total + (entry.type === 'post' ? 0.5 : entry.type === 'work' ? 0.8 : 0);
 }
 
 function update(index: Entry[], query: string) {
@@ -96,7 +96,7 @@ function update(index: Entry[], query: string) {
 
   if (terms.length === 0) {
     // Before typing: the pages, then the latest posts
-    results = [...index.filter((e) => e.type === 'page'), ...index.filter((e) => e.type === 'post').slice(0, 5)];
+    results = [...index.filter((e) => e.type === 'page'), ...index.filter((e) => e.type === 'work'), ...index.filter((e) => e.type === 'post').slice(0, 5)];
   } else {
     results = index
       .map((e) => ({ e, s: score(e, terms) }))
@@ -105,7 +105,7 @@ function update(index: Entry[], query: string) {
       .map((x) => x.e);
   }
 
-  const order: Entry['type'][] = ['page', 'post', 'repo'];
+  const order: Entry['type'][] = ['page', 'work', 'post', 'repo'];
   const grouped = order.map((type) => ({ type, items: results.filter((r) => r.type === type).slice(0, 6) }));
   results = grouped.flatMap((g) => g.items);
   selected = 0;

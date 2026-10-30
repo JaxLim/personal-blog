@@ -6,10 +6,11 @@
  * for links, focus and the live signal only, never as decoration.
  */
 :root {
-  /* Colour: light */
-  --paper: #fafafb;
+  /* Colour: light. The page is white; panels sit one step below it. */
+  --paper: #ffffff;
   --paper-raised: #ffffff;
-  --paper-sunken: #f2f3f5;
+  --paper-sunken: #f4f5f7;
+  --paper-tint: #f8f9fb;
   --ink: #15171c;
   --ink-soft: #3a3e47;
   --graphite: #646a76;
@@ -19,6 +20,9 @@
   --accent: #2440c8;
   --accent-ink: #1a2f9a;
   --accent-wash: #edf0fd;
+  --warn: #c2412d;
+  --warn-wash: #fdf0ed;
+  --ok: #1f8a5b;
   --tick: #15171c;
   --tick-idle: #d9dce2;
   --selection: #d6ddfb;
@@ -40,6 +44,12 @@
   --step-3: 2.0625rem;  /* 33 */
   --step-4: clamp(2.25rem, 1.6rem + 2.8vw, 2.75rem); /* 44 */
   --step-display: clamp(3.5rem, 1.4rem + 9vw, 8rem);
+  /* The home headline and case-study names */
+  --step-hero: clamp(2.6rem, 0.9rem + 6.6vw, 6.5rem);
+  --step-5: clamp(2.5rem, 1.2rem + 4.2vw, 4.25rem);
+  /* Mono labels: small capitals for indices and metadata */
+  --step-label: 0.6875rem; /* 11 */
+  --track-label: 0.08em;
 
   /* Tracking. Latin display type is tightened; CJK is never tightened. */
   --track-title: -0.034em;
@@ -74,9 +84,12 @@
   --radius-s: 4px;
   --radius-m: 8px;
   --radius-l: 14px;
+  --radius-xl: 22px;
 
   /* Motion */
   --ease-out: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-reveal: 900ms;
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-spring: cubic-bezier(0.3, 1.4, 0.5, 1);
   --dur-fast: 140ms;
@@ -117,9 +130,10 @@
 /* ---------- Colour: dark ---------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --paper: #0f1217;
-    --paper-raised: #161a21;
-    --paper-sunken: #0b0d11;
+    --paper: #0d0f13;
+    --paper-raised: #15181e;
+    --paper-sunken: #111419;
+    --paper-tint: #101317;
     --ink: #e9ebef;
     --ink-soft: #c6cad2;
     --graphite: #949aa6;
@@ -129,8 +143,11 @@
     --accent: #93a6ff;
     --accent-ink: #b7c4ff;
     --accent-wash: #1a2140;
+    --warn: #ff8a72;
+    --warn-wash: #2c1915;
+    --ok: #5fd39c;
     --tick: #c6cad2;
-    --tick-idle: #262b35;
+    --tick-idle: #2b313c;
     --selection: #2a3566;
     --scrim: rgb(5 6 9 / 0.6);
     --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.7);
@@ -140,9 +157,10 @@
 }
 
 :root[data-theme='dark'] {
-  --paper: #0f1217;
-  --paper-raised: #161a21;
-  --paper-sunken: #0b0d11;
+  --paper: #0d0f13;
+  --paper-raised: #15181e;
+  --paper-sunken: #111419;
+  --paper-tint: #101317;
   --ink: #e9ebef;
   --ink-soft: #c6cad2;
   --graphite: #949aa6;
@@ -152,8 +170,11 @@
   --accent: #93a6ff;
   --accent-ink: #b7c4ff;
   --accent-wash: #1a2140;
+  --warn: #ff8a72;
+  --warn-wash: #2c1915;
+  --ok: #5fd39c;
   --tick: #c6cad2;
-  --tick-idle: #262b35;
+  --tick-idle: #2b313c;
   --selection: #2a3566;
   --scrim: rgb(5 6 9 / 0.6);
   --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 32px -12px rgb(0 0 0 / 0.7);

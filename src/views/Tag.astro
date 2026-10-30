@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import PostList from '../components/PostList.astro';
+import PageIntro from '../components/PageIntro.astro';
 import { LOCALES, localePath, type Locale } from '../i18n/config';
 import { useTranslations } from '../i18n/ui';
 import { getTags, type Tag } from '../lib/posts';
@@ -21,13 +22,11 @@ for (const l of LOCALES) {
 ---
 
 <Base locale={locale} title={t.writing.tagTitle(tag.tag)} description={t.writing.tagDescription(tag.tag)} alternates={alternates}>
+  <PageIntro label={t.writing.byTag} title={tag.tag} lede={t.writing.tagLede(tag.posts.length)}>
+    <a class="back link" href={localePath(locale, '/writing/')}>{t.writing.allWriting}</a>
+  </PageIntro>
   <div class="page">
-    <header class="intro">
-      <a class="back link" href={localePath(locale, '/writing/')}>{t.writing.allWriting}</a>
-      <h1 class="intro__title">{tag.tag}</h1>
-      <p class="intro__lede">{t.writing.tagLede(tag.posts.length)}</p>
-    </header>
-    <section class="rail">
+    <section class="rail" data-reveal>
       <div class="rail__head">
         <h2 class="rail__title">{t.nav.writing}</h2>
       </div>
@@ -38,8 +37,7 @@ for (const l of LOCALES) {
 
 <style>
   .back {
-    display: inline-block;
-    margin-bottom: var(--space-5);
+    justify-self: start;
     font-size: var(--step--1);
     font-weight: 500;
   }

@@ -5,6 +5,8 @@
  * persisted header.
  */
 import './search';
+import { scrollToElement, scrollToTop } from './motion';
+import { splitLocale } from '../i18n/config';
 
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -176,15 +178,29 @@ document.addEventListener('click', (event) => {
     event.preventDefault();
     const url = new URL(anchor.getAttribute('href')!, location.href).href;
     history.replaceState(history.state, '', anchor.getAttribute('href'));
-    document.getElementById(anchor.getAttribute('href')!.slice(1))?.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth' });
+    const section = document.getElementById(anchor.getAttribute('href')!.slice(1));
+    if (section) scrollToElement(section);
     navigator.clipboard?.writeText(url).then(() => toast(proseLabels().linkCopied));
+    return;
+  }
+
+  // Table of contents and footnote links: glide to the target
+  const jump = target.closest<HTMLAnchorElement>('[data-toc-link], [data-footnote-ref], [data-footnote-backref]');
+  if (jump) {
+    const id = decodeURIComponent(jump.getAttribute('href')?.slice(1) ?? '');
+    const el = id && document.getElementById(id);
+    if (el) {
+      event.preventDefault();
+      history.replaceState(history.state, '', `#${id}`);
+      scrollToElement(el);
+    }
     return;
   }
 
   // Back to top
   if (target.closest('[data-back-to-top]')) {
     event.preventDefault();
-    window.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' });
+    scrollToTop();
   }
 });
 
@@ -242,9 +258,7 @@ function onScroll() {
 window.addEventListener('scroll', onScroll, { passive: true });
 
 function syncNav() {
-  const { pathname } = location;
-  const [, maybeLocale] = pathname.split('/');
-  const path = ['zh', 'ja'].includes(maybeLocale) ? pathname.slice(maybeLocale.length + 1) : pathname;
+  const { path } = splitLocale(location.pathname);
   document.querySelectorAll<HTMLAnchorElement>('header [data-nav]').forEach((a) => {
     const key = a.dataset.nav!;
     const current = path.startsWith(key) || (key === '/writing/' && path.startsWith('/tags/'));
@@ -313,7 +327,19 @@ function setupArticle() {
     bar.className = 'code-block__bar';
     const lang = pre.dataset.language ?? '';
     const name = document.createElement('span');
-    name.textContent = LANGUAGE_NAMES[lang] ?? (lang && lang !== 'plaintext' ? lang : '');
+    const langName = LANGUAGE_NAMES[lang] ?? (lang && lang !== 'plaintext' ? lang : '');
+    if (pre.dataset.title) {
+      wrap.classList.add('code-block--titled');
+      const file = document.createElement('span');
+      file.className = 'code-block__file';
+      file.textContent = pre.dataset.title;
+      const tag = document.createElement('span');
+      tag.className = 'code-block__lang';
+      tag.textContent = langName;
+      name.append(file, tag);
+    } else {
+      name.textContent = langName;
+    }
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'code-copy';
@@ -371,7 +397,70 @@ function setupArticle() {
 /* Page lifecycle                                                      */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Smaller reading aids: images open in the lightbox, footnote references
+ * show their note on hover or focus, and the contents column counts down
+ * the minutes left.
+ */
+function setupReadingAids() {
+  const prose = document.querySelector<HTMLElement>('[data-prose]');
+  if (!prose) return;
+
+  prose.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
+    if (img.closest('a') || img.hasAttribute('data-zoom')) return;
+    img.setAttribute('data-zoom', '');
+    img.setAttribute('tabindex', '0');
+    img.setAttribute('role', 'button');
+  });
+
+  prose.querySelectorAll<HTMLAnchorElement>('[data-footnote-ref]').forEach((ref) => {
+    if (ref.dataset.previewed) return;
+    ref.dataset.previewed = '1';
+    const id = decodeURIComponent(ref.getAttribute('href')?.slice(1) ?? '');
+    const note = id ? document.getElementById(id) : null;
+    if (!note) return;
+    const clone = note.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('[data-footnote-backref]').forEach((a) => a.remove());
+    const tip = document.createElement('span');
+    tip.className = 'footnote-tip';
+    tip.setAttribute('role', 'tooltip');
+    tip.innerHTML = clone.innerHTML;
+    ref.parentElement?.classList.add('footnote-anchor');
+    ref.parentElement?.append(tip);
+  });
+
+  const left = document.querySelector<HTMLElement>('[data-minutes-left]');
+  const total = Number(prose.dataset.minutes ?? 0);
+  if (left && total) {
+    const format = (n: number) => {
+      try {
+        return (JSON.parse(left.dataset.format ?? '{}') as Record<string, string>)[n <= 0 ? 'done' : 'n']?.replace('{n}', String(n)) ?? '';
+      } catch {
+        return '';
+      }
+    };
+    const update = () => {
+      const rect = prose.getBoundingClientRect();
+      const done = Math.min(1, Math.max(0, -rect.top / Math.max(1, rect.height - window.innerHeight * 0.6)));
+      left.textContent = format(Math.ceil(total * (1 - done)));
+    };
+    update();
+    window.removeEventListener('scroll', minutesHandler);
+    minutesHandler = () => requestAnimationFrame(update);
+    window.addEventListener('scroll', minutesHandler, { passive: true });
+  }
+}
+
+let minutesHandler: () => void = () => {};
+
+document.addEventListener('keydown', (event) => {
+  // Enlargeable images respond to Enter like buttons
+  const el = event.target as HTMLElement;
+  if (event.key === 'Enter' && el.matches?.('img[data-zoom]')) el.click();
+});
+
 document.addEventListener('astro:before-swap', () => {
+  window.removeEventListener('scroll', minutesHandler);
   setLangMenu(false);
   setSheet(false);
 });
@@ -382,4 +471,5 @@ document.addEventListener('astro:page-load', () => {
   syncNav();
   onScroll();
   setupArticle();
+  setupReadingAids();
 });

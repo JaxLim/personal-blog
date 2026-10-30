@@ -10,13 +10,14 @@ import { getPosts } from '../../lib/posts';
 import { getProjectData } from '../../lib/projects';
 import { repoDescription } from '../../lib/github-shared';
 import { site } from '../../site.config';
+import { caseStudies, caseStudyUrl } from '../../work';
 
 export function getStaticPaths() {
   return LOCALES.map((locale) => ({ params: { locale } }));
 }
 
 export interface SearchEntry {
-  type: 'page' | 'post' | 'repo';
+  type: 'page' | 'post' | 'repo' | 'work';
   title: string;
   url: string;
   text?: string;
@@ -64,6 +65,18 @@ export async function GET({ params }: APIContext) {
     }),
   );
 
+  const workEntries: SearchEntry[] = caseStudies.map((s) => ({
+    type: 'work',
+    title: s.name,
+    url: caseStudyUrl(s, locale),
+    text: s.tagline[locale],
+    keywords: [
+      ...s.stack.flatMap((g) => g.items),
+      ...s.problems.flatMap((p) => [p.title[locale], p.problem[locale], p.solution[locale], p.proof]),
+      ...s.diagram.nodes.map((n) => n.label),
+    ].join(' '),
+  }));
+
   const repoEntries: SearchEntry[] = data.repos.map((r) => ({
     type: 'repo',
     title: r.name,
@@ -73,7 +86,7 @@ export async function GET({ params }: APIContext) {
     external: true,
   }));
 
-  return new Response(JSON.stringify([...pages, ...postEntries, ...repoEntries]), {
+  return new Response(JSON.stringify([...pages, ...workEntries, ...postEntries, ...repoEntries]), {
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
   });
 }

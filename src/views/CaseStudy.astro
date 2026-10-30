@@ -1,0 +1,654 @@
+---
+import { Image, getImage } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import SectionHead from '../components/SectionHead.astro';
+import ArchDiagram from '../components/work/ArchDiagram.astro';
+import OversellLab from '../components/work/OversellLab.astro';
+import GateDemo from '../components/work/GateDemo.astro';
+import { getProjectData } from '../lib/projects';
+import { LANGUAGE_COLORS, languageShares } from '../lib/github-shared';
+import { formatLongDate, relativeTime } from '../lib/format';
+import { localePath, type Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+import { site } from '../site.config';
+import { caseStudies, caseStudyUrl, type CaseStudy } from '../work';
+
+interface Props {
+  locale: Locale;
+  study: CaseStudy;
+}
+
+const { locale, study } = Astro.props;
+const t = useTranslations(locale);
+const data = await getProjectData();
+const repo = data.repos.find((r) => r.name.toLowerCase() === study.repo.toLowerCase());
+const repoUrl = repo?.url ?? `https://github.com/${site.github.username}/${study.repo}`;
+const shares = repo ? languageShares(repo, 5) : [];
+const next = caseStudies[(caseStudies.indexOf(study) + 1) % caseStudies.length];
+
+const pick = (s: CaseStudy['screens'][number]) => (locale === 'zh' && s.zh ? s.zh : s.image);
+const [lead, ...rest] = study.screens;
+const gallery = await Promise.all(
+  rest.map(async (s) => ({ ...s, src: pick(s), full: (await getImage({ src: pick(s), width: 1600 })).src })),
+);
+const leadFull = (await getImage({ src: pick(lead), width: 1600 })).src;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareSourceCode',
+  name: study.name,
+  description: study.tagline[locale],
+  codeRepository: repoUrl,
+  programmingLanguage: shares.map((s) => s.name).filter((n) => n !== 'Other'),
+  author: { '@type': 'Person', name: site.name },
+  inLanguage: locale,
+};
+---
+
+<Base
+  locale={locale}
+  title={study.name}
+  description={study.tagline[locale]}
+  jsonLd={jsonLd}
+  ogImage={`/og/${locale}/work/${study.slug}.png`}
+>
+  <article class="study">
+    <header class="study__hero page">
+      <a class="study__back label" href={localePath(locale, '/projects/')}>
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M10 6H2m3.5-3.5L2 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        {t.work.allWork}
+      </a>
+      <p class="label" data-reveal="fade"><span class="label--accent">{t.work.label}</span> · {study.year}</p>
+      <h1 class="study__name" data-lines translate="no">
+        <span class="line"><span>{study.name}</span></span>
+      </h1>
+      <p class="study__tagline" data-reveal style="--reveal-delay:200">{study.tagline[locale]}</p>
+
+      <dl class="study__meta" data-reveal style="--reveal-delay:320">
+        <div>
+          <dt class="label">{t.work.role}</dt>
+          <dd>{study.role[locale]}</dd>
+        </div>
+        <div>
+          <dt class="label">{t.work.status}</dt>
+          <dd>{study.status[locale]}</dd>
+        </div>
+        <div>
+          <dt class="label">{t.work.lastPush}</dt>
+          <dd>
+            {
+              repo ? (
+                <time datetime={repo.pushedAt} data-time title={formatLongDate(new Date(repo.pushedAt), locale)}>
+                  {relativeTime(repo.pushedAt, locale)}
+                </time>
+              ) : (
+                '—'
+              )
+            }
+          </dd>
+        </div>
+        <div>
+          <dt class="label">{t.work.source}</dt>
+          <dd>
+            <a class="link" href={repoUrl} rel="noopener" translate="no">
+              github.com/{site.github.username}/{study.repo}
+            </a>
+          </dd>
+        </div>
+      </dl>
+
+      {
+        shares.length > 0 && (
+          <div class="langbar" data-reveal style="--reveal-delay:380">
+            <p class="label">{t.work.languages}</p>
+            <div class="langbar__bar" role="img" aria-label={shares.map((s) => `${s.name} ${(s.share * 100).toFixed(1)}%`).join(', ')}>
+              {shares.map((s) => (
+                <span style={`--g:${s.share.toFixed(4)};--c:${LANGUAGE_COLORS[s.name] ?? 'var(--graphite)'}`} />
+              ))}
+            </div>
+            <ul class="langbar__legend" aria-hidden="true">
+              {shares.map((s) => (
+                <li>
+                  <i style={`--c:${LANGUAGE_COLORS[s.name] ?? 'var(--graphite)'}`} />
+                  {s.name} <span>{(s.share * 100).toFixed(1)}%</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </header>
+
+    <figure class="study__lead page" data-reveal="scale" style="--reveal-delay:200">
+      <div class="study__lead-inner" data-parallax="28">
+        <div class="frame">
+          <div class="frame__bar">
+            <span class="frame__dots"><i></i><i></i><i></i></span><span class="frame__title">{lead.caption[locale]}</span>
+          </div>
+          <a href={leadFull} data-zoom={leadFull} data-caption={lead.caption[locale]} aria-label={t.article.enlarge}>
+            <Image src={pick(lead)} alt={lead.alt[locale]} widths={[720, 1080, 1440]} sizes="(min-width: 78rem) 72rem, 94vw" loading="eager" />
+          </a>
+        </div>
+      </div>
+    </figure>
+
+    <section class="section page" aria-labelledby="overview">
+      <SectionHead index="01" label={t.work.overview} id="overview" title={t.work.overview} />
+      <div class="study__body">
+        <div class="study__summary" data-reveal>
+          {study.summary.map((p) => <p>{p[locale]}</p>)}
+        </div>
+        <dl class="metrics" data-stagger="90">
+          {
+            study.metrics.map((m) => (
+              <div class="metric" data-reveal>
+                <dt class="metric__value" data-count translate="no">{m.value}</dt>
+                <dd class="metric__label">{m.label[locale]}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    <section class="section page" aria-labelledby="problems">
+      <SectionHead index="02" label={t.work.problems} id="problems" title={t.work.problems} note={t.work.problemsNote} />
+      <ol class="problems" data-stagger="70">
+        {
+          study.problems.map((p, i) => (
+            <li class="problem" data-reveal>
+              <p class="problem__index label">{String(i + 1).padStart(2, '0')}</p>
+              <h3 class="problem__title">{p.title[locale]}</h3>
+              <div class="problem__text">
+                <p>
+                  <span class="label">{t.work.problem}</span>
+                  {p.problem[locale]}
+                </p>
+                <p>
+                  <span class="label">{t.work.approach}</span>
+                  {p.solution[locale]}
+                </p>
+              </div>
+              <p class="problem__proof">
+                <svg viewBox="0 0 12 12" aria-hidden="true">
+                  <path d="m2.5 6.2 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="visually-hidden">{t.work.proof}: </span>
+                <code translate="no">{p.proof}</code>
+              </p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="section page" aria-labelledby="architecture">
+      <SectionHead index="03" label={t.work.architecture} id="architecture" title={t.work.architecture} note={study.diagramIntro[locale]} />
+      <div data-reveal>
+        <ArchDiagram diagram={study.diagram} locale={locale} id={`${study.slug}-arch`} />
+      </div>
+    </section>
+
+    <section class="section page" aria-labelledby="demo">
+      <SectionHead index="04" label={t.work.demo} id="demo" title={t.work.demo} note={study.demoIntro[locale]} />
+      <div data-reveal>
+        {study.demo === 'oversell' ? <OversellLab locale={locale} /> : <GateDemo locale={locale} />}
+      </div>
+    </section>
+
+    {
+      gallery.length > 0 && (
+        <section class="section page" aria-labelledby="screens">
+          <SectionHead index="05" label={t.work.screens} id="screens" title={t.work.screens} />
+          <ul class="gallery" data-stagger="90">
+            {gallery.map((s) => (
+              <li data-reveal>
+                <figure>
+                  <a class="frame gallery__frame" href={s.full} data-zoom={s.full} data-caption={s.caption[locale]} aria-label={`${t.article.enlarge}: ${s.alt[locale]}`}>
+                    <Image src={s.src} alt={s.alt[locale]} widths={[480, 720, 960]} sizes="(min-width: 60rem) 34rem, 92vw" loading="lazy" />
+                  </a>
+                  <figcaption>{s.caption[locale]}</figcaption>
+                </figure>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <section class="section page" aria-labelledby="stack">
+      <SectionHead index={gallery.length ? '06' : '05'} label={t.work.stack} id="stack" title={t.work.stack} />
+      <div class="stack" data-stagger="70">
+        {
+          study.stack.map((g) => (
+            <div class="stack__group" data-reveal>
+              <h3 class="label">{g.group[locale]}</h3>
+              <ul class="chips">
+                {g.items.map((item) => (
+                  <li translate="no">{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="section page" aria-labelledby="lessons">
+      <SectionHead index={gallery.length ? '07' : '06'} label={t.work.lessons} id="lessons" title={t.work.lessons} />
+      <ol class="lessons" data-stagger="90">
+        {study.lessons.map((l) => <li data-reveal>{l[locale]}</li>)}
+      </ol>
+    </section>
+
+    {
+      next.slug !== study.slug && (
+        <nav class="next page" aria-label={t.work.next}>
+          <a class="next__link" href={caseStudyUrl(next, locale)} data-reveal>
+            <span class="label">{t.work.next}</span>
+            <span class="next__name" translate="no">
+              {next.name}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 12h16M14 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+            <span class="next__tagline">{next.tagline[locale]}</span>
+          </a>
+        </nav>
+      )
+    }
+  </article>
+</Base>
+
+<style>
+  .study__hero {
+    padding-top: clamp(var(--space-7), 7vw, var(--space-9));
+    padding-bottom: clamp(var(--space-6), 5vw, var(--space-8));
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .study__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    justify-self: start;
+    margin-bottom: var(--space-5);
+    color: var(--graphite);
+    transition: color var(--dur-fast) ease;
+  }
+
+  .study__back svg {
+    width: 12px;
+    height: 12px;
+    transition: transform var(--dur-slow) var(--ease-expo);
+  }
+
+  .study__back:hover {
+    color: var(--ink);
+  }
+
+  .study__back:hover svg {
+    transform: translateX(-3px);
+  }
+
+  .study__name {
+    font-size: clamp(3rem, 1rem + 8vw, 8rem);
+    line-height: 0.95;
+    font-weight: 650;
+    letter-spacing: -0.055em;
+    margin-left: -0.05em;
+  }
+
+  .study__tagline {
+    max-width: 44rem;
+    font-size: clamp(var(--step-1), 1rem + 0.8vw, var(--step-2));
+    line-height: 1.4;
+    letter-spacing: var(--track-heading);
+    color: var(--ink-soft);
+  }
+
+  :lang(zh) .study__tagline,
+  :lang(ja) .study__tagline {
+    font-size: clamp(var(--step-0), 0.95rem + 0.5vw, var(--step-1));
+    line-height: 1.8;
+    max-width: 36em;
+  }
+
+  .study__meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: var(--space-4) var(--space-5);
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--hairline);
+  }
+
+  .study__meta dd {
+    margin-top: var(--space-1);
+    font-size: var(--step--1);
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+
+  .langbar {
+    margin-top: var(--space-4);
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .langbar__bar {
+    display: flex;
+    gap: 2px;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .langbar__bar span {
+    flex: var(--g) 1 0;
+    min-width: 2px;
+    background: var(--c);
+    transform-origin: left;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .langbar:not(.is-in) .langbar__bar span {
+      transform: scaleX(0);
+    }
+
+    .langbar__bar span {
+      transition: transform 1.2s var(--ease-expo) 0.4s;
+    }
+  }
+
+  .langbar__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    list-style: none;
+    padding: 0;
+    font-size: var(--step--2);
+    color: var(--ink-soft);
+  }
+
+  .langbar__legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+  }
+
+  .langbar__legend i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--c);
+  }
+
+  .langbar__legend span {
+    color: var(--graphite);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .study__lead {
+    margin-bottom: var(--space-6);
+  }
+
+  .study__lead-inner {
+    transform: translate3d(0, var(--parallax, 0), 0);
+  }
+
+  .study__lead .frame {
+    border-radius: var(--radius-xl);
+  }
+
+  .study__body {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  @media (min-width: 52rem) {
+    .study__body {
+      grid-template-columns: minmax(12rem, 3fr) minmax(0, 9fr);
+      column-gap: var(--space-6);
+    }
+
+    .study__body > * {
+      grid-column: 2;
+    }
+  }
+
+  .study__summary {
+    display: grid;
+    gap: var(--space-4);
+    max-width: 42rem;
+    font-family: var(--font-serif);
+    font-size: var(--prose-size);
+    line-height: var(--leading-prose);
+    color: var(--ink-soft);
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+    border-top: 1px solid var(--hairline-strong);
+  }
+
+  .metric {
+    padding: var(--space-5) var(--space-5) var(--space-5) 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .metric__value {
+    font-size: var(--step-4);
+    font-weight: 620;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric__label {
+    margin-top: var(--space-2);
+    font-size: var(--step--1);
+    color: var(--graphite);
+    line-height: 1.5;
+  }
+
+  /* Hard problems: a numbered sheet of cards */
+  .problems {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+  }
+
+  .problem {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-l);
+    background: var(--paper-raised);
+    transition:
+      border-color var(--dur-base) ease,
+      transform 600ms var(--ease-expo),
+      box-shadow 600ms var(--ease-expo);
+  }
+
+  .problem:hover {
+    border-color: var(--hairline-strong);
+    box-shadow: 0 24px 48px -36px rgb(21 23 28 / 0.35);
+  }
+
+  .problem__index {
+    color: var(--accent);
+  }
+
+  .problem__title {
+    font-size: var(--step-1);
+    line-height: 1.3;
+  }
+
+  .problem__text {
+    display: grid;
+    gap: var(--space-3);
+    font-size: var(--step--1);
+    line-height: 1.65;
+    color: var(--ink-soft);
+  }
+
+  .problem__text .label {
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .problem__proof {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    justify-self: start;
+    margin-top: var(--space-2);
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ok) 10%, transparent);
+    color: var(--ok);
+    font-size: var(--step--2);
+  }
+
+  .problem__proof svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .problem__proof code {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+  }
+
+  /* Screens */
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: var(--space-6) var(--space-5);
+    list-style: none;
+    padding: 0;
+  }
+
+  .gallery__frame {
+    display: block;
+    transition:
+      transform 700ms var(--ease-expo),
+      box-shadow 700ms var(--ease-expo);
+  }
+
+  .gallery__frame:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 1px 2px rgb(21 23 28 / 0.04),
+      0 32px 64px -32px rgb(21 23 28 / 0.35);
+  }
+
+  .gallery figcaption {
+    margin-top: var(--space-3);
+    font-size: var(--step--1);
+    color: var(--graphite);
+  }
+
+  .stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--space-6) var(--space-5);
+  }
+
+  .stack__group .label {
+    margin-bottom: var(--space-3);
+  }
+
+  .lessons {
+    display: grid;
+    gap: 0;
+    max-width: 52rem;
+    margin-left: auto;
+    padding: 0;
+    list-style: none;
+    counter-reset: lesson;
+  }
+
+  .lessons li {
+    position: relative;
+    padding: var(--space-5) 0 var(--space-5) 3.5rem;
+    border-top: 1px solid var(--hairline);
+    font-size: var(--step-1);
+    line-height: 1.5;
+    letter-spacing: var(--track-heading);
+    color: var(--ink-soft);
+    counter-increment: lesson;
+  }
+
+  :lang(zh) .lessons li,
+  :lang(ja) .lessons li {
+    font-size: var(--step-0);
+    line-height: 1.9;
+  }
+
+  .lessons li::before {
+    content: counter(lesson, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: calc(var(--space-5) + 0.35em);
+    font-family: var(--font-mono);
+    font-size: var(--step-label);
+    letter-spacing: var(--track-label);
+    color: var(--accent);
+  }
+
+  /* Next case study: one large, quiet link */
+  .next {
+    padding-block: var(--space-6) var(--space-4);
+  }
+
+  .next__link {
+    display: grid;
+    gap: var(--space-3);
+    padding-top: var(--space-7);
+    border-top: 1px solid var(--ink);
+  }
+
+  .next__name {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    font-size: clamp(2.6rem, 1rem + 6vw, 6rem);
+    font-weight: 650;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    transition: color var(--dur-base) ease;
+  }
+
+  .next__name svg {
+    width: 0.7em;
+    height: 0.7em;
+    flex: none;
+    transform: translateX(-0.2em);
+    opacity: 0;
+    transition:
+      transform 700ms var(--ease-expo),
+      opacity 400ms ease;
+  }
+
+  .next__link:hover .next__name {
+    color: var(--accent);
+  }
+
+  .next__link:hover .next__name svg {
+    transform: none;
+    opacity: 1;
+  }
+
+  .next__tagline {
+    max-width: 40rem;
+    color: var(--graphite);
+  }
+</style>

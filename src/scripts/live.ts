@@ -14,6 +14,8 @@
  */
 import {
   dayKey,
+  eventDetail,
+  eventTitle,
   lastDays,
   normalizeEvent,
   pulseSummary,
@@ -170,7 +172,7 @@ async function pollEvents() {
       bumped.add(key);
     }
     const repo = s.data.repos.find((r) => r.name === e.repo);
-    if (repo && e.type === 'PushEvent' && e.createdAt > repo.pushedAt) repo.pushedAt = e.createdAt;
+    if (repo && e.kind === 'push' && e.createdAt > repo.pushedAt) repo.pushedAt = e.createdAt;
   }
 
   s.data.events = [...fresh, ...s.data.events].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 40);
@@ -337,11 +339,18 @@ function bindPulse() {
 function renderLatest(event: ActivityEvent | undefined, animate: boolean) {
   const link = document.querySelector<HTMLAnchorElement>('[data-latest]');
   if (!link || !event) return;
-  const title = link.querySelector('[data-latest-title]');
-  const unchanged = title?.textContent?.trim() === event.title && link.getAttribute('href') === event.url;
+  const title = link.querySelector<HTMLElement>('[data-latest-title]');
+  const text = eventTitle(event, locale());
+  const unchanged = title?.textContent?.trim() === text && link.getAttribute('href') === event.url;
 
   link.href = event.url;
-  if (title) title.textContent = event.title;
+  if (title) {
+    title.textContent = text;
+    if (event.subject) title.lang = 'en';
+    else title.removeAttribute('lang');
+  }
+  const detail = link.querySelector('[data-latest-detail]');
+  if (detail) detail.textContent = eventDetail(event, locale());
   const repo = link.querySelector('[data-latest-repo]');
   if (repo) repo.textContent = event.repo;
   const time = link.querySelector<HTMLTimeElement>('[data-latest-time]');

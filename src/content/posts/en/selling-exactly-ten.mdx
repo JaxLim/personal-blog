@@ -1,0 +1,87 @@
+---
+title: Selling exactly ten
+description: Forty people try to buy the last ten units at once. Why the obvious code oversells, and the single SQL statement that never does.
+date: 2026-10-30
+tags: [Java, MySQL, Concurrency]
+pinned: true
+project: orderpilot
+---
+
+Every inventory system eventually meets the same afternoon: a product with ten units left, a newsletter goes out, and forty people press “Buy” within the same second. The question isn't whether your code handles one order correctly. It's whether it handles forty at the same time.
+
+In [OrderPilot](/projects/orderpilot/) there's a test for exactly that afternoon. It starts forty threads against a real MySQL in a container, each trying to buy one unit of a product with ten in stock, and asserts that exactly ten orders exist afterwards. This post is about the one line that makes it pass.
+
+## The code everybody writes first
+
+The first version of a stock check reads naturally:
+
+```java
+int available = jdbc.queryForObject(
+    "SELECT available FROM inventory WHERE sku = ?", Integer.class, sku);
+if (available >= qty) { // [!code highlight]
+    jdbc.update("UPDATE inventory SET available = ? WHERE sku = ?", available - qty, sku);
+    createOrder(sku, qty);
+}
+```
+
+Each request is correct on its own. The trouble is the gap between the `SELECT` and the `UPDATE`. Two requests can both read the same number, both decide there's enough, and both write back the same result:
+
+<Figure caption="Two buyers, one unit. Both read 1, both pass the check, both write 0: two orders, one unit sold twice." wide>
+  <svg viewBox="0 0 720 210" role="img" aria-label="Timeline of two buyers reading the same stock value">
+    <g style="font: 12px var(--font-sans); fill: var(--graphite)">
+      <text x="16" y="62">Buyer A</text>
+      <text x="16" y="142">Buyer B</text>
+    </g>
+    <line x1="96" y1="58" x2="700" y2="58" style="stroke: var(--hairline-strong)" />
+    <line x1="96" y1="138" x2="700" y2="138" style="stroke: var(--hairline-strong)" />
+    <g style="font: 600 12px var(--font-mono)">
+      <rect x="120" y="40" width="130" height="36" rx="8" style="fill: var(--paper-raised); stroke: var(--ink)" />
+      <text x="185" y="63" text-anchor="middle" style="fill: var(--ink)">read → 1</text>
+      <rect x="200" y="120" width="130" height="36" rx="8" style="fill: var(--paper-raised); stroke: var(--ink)" />
+      <text x="265" y="143" text-anchor="middle" style="fill: var(--ink)">read → 1</text>
+      <rect x="400" y="40" width="130" height="36" rx="8" style="fill: var(--paper-raised); stroke: var(--accent)" />
+      <text x="465" y="63" text-anchor="middle" style="fill: var(--accent)">write 0 · order</text>
+      <rect x="520" y="120" width="160" height="36" rx="8" style="fill: var(--warn-wash); stroke: var(--warn)" />
+      <text x="600" y="143" text-anchor="middle" style="fill: var(--warn)">write 0 · order again</text>
+    </g>
+    <text x="96" y="196" style="font: 11px var(--font-mono); fill: var(--graphite-soft)">time →</text>
+  </svg>
+</Figure>
+
+With two buyers that's one unit too many. With forty, the race compounds: every write is based on a number that may already be stale, so stock can even go *up* when a slow request writes back an old value. The [interactive lab in the case study](/projects/orderpilot/#demo) runs exactly this code path and usually sells twenty or thirty units that don't exist.
+
+## Let the database do the check
+
+The fix is to stop asking the database a question and then acting on the answer. Ask it to do both at once:
+
+```java title="InventoryService.java"
+int rows = jdbc.update("""
+    UPDATE inventory
+       SET available = available - ?
+     WHERE sku = ? AND available >= ?""", qty, sku, qty); // [!code highlight]
+if (rows == 0) throw new InsufficientStock(sku);
+```
+
+InnoDB locks the row for the `UPDATE` and evaluates the `WHERE` against the latest committed version, so the check and the decrement can't be separated. When stock runs out, the condition stops matching, the statement changes zero rows, and the code knows it lost. There's no window for another request to slip into.
+
+<Callout type="tip" title="Rows affected is the answer">
+The number of rows the statement changed is the whole result: one means you got the stock, zero means you didn't. No second query, and nothing to race.
+</Callout>
+
+## The details that make it hold
+
+One statement solves a single product. Real orders have several lines, and a few details keep the guarantee true for them too.
+
+**One transaction for the whole order.** Every line's `UPDATE`, the order row and its outbox event commit together. If line three runs out, the exception rolls back lines one and two, so nobody is left holding stock for an order that doesn't exist.
+
+**Lock in a fixed order.** Two multi-line orders touching the same products in opposite orders can deadlock: each holds one row and waits for the other. Sorting the lines by product id before reserving means every transaction asks for locks in the same order, so cycles can't form.
+
+**A constraint as the last line of defence.** The table carries `CHECK (available >= 0)`.[^1] If a future change ever bypasses the conditional update, the database refuses the write instead of quietly going negative.
+
+## What I didn't do
+
+The usual alternatives each cost something this didn't. `SELECT … FOR UPDATE` followed by an update holds the same lock but takes two round trips. Optimistic retries with a version column turn a hot product into a retry storm. Pre-deducting in Redis with a Lua script scales further, but then there are two sources of truth to reconcile, which only pays for itself at flash-sale volume.
+
+For a store, the conditional `UPDATE` is the rare solution that is both the simplest and provably correct. The test that proves it is short: forty threads, ten units, and one assertion that exactly ten orders exist.
+
+[^1]: MySQL enforces `CHECK` constraints from version 8.0.16. Earlier versions parse them and silently ignore them.

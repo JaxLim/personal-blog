@@ -1,5 +1,5 @@
 ---
-import { pulseSummary, type GitHubData } from '../lib/github-shared';
+import { eventDetail, eventTitle, pulseSummary, lastDays, PULSE_DAYS, type GitHubData } from '../lib/github-shared';
 import { relativeTime } from '../lib/format';
 import type { Locale } from '../i18n/config';
 import { useTranslations } from '../i18n/ui';
@@ -13,7 +13,8 @@ interface Props {
 const { data, locale } = Astro.props;
 const t = useTranslations(locale);
 const latest = data.events[0];
-const total = Object.values(data.days).reduce((a, b) => a + b, 0);
+// Only the days the pulse shows, so the summary matches the chart above it.
+const total = lastDays(PULSE_DAYS).reduce((sum, d) => sum + (data.days[d] ?? 0), 0);
 ---
 
 <div class="latest">
@@ -26,11 +27,12 @@ const total = Object.values(data.days).reduce((a, b) => a + b, 0);
           <span class="latest__dot" aria-hidden="true" />
           {data.sample ? t.latest.label : t.latest.live}
         </span>
-        <span class="latest__title" data-latest-title lang="en">
-          {latest.title}
+        <span class="latest__title" data-latest-title lang={latest.subject ? 'en' : undefined}>
+          {eventTitle(latest, locale)}
         </span>
         <span class="latest__meta">
           <span class="latest__repo" data-latest-repo translate="no">{latest.repo}</span>
+          <span class="latest__detail" data-latest-detail>{eventDetail(latest, locale)}</span>
           <time datetime={latest.createdAt} data-time data-latest-time>
             {relativeTime(latest.createdAt, locale)}
           </time>
@@ -108,6 +110,10 @@ const total = Object.values(data.days).reduce((a, b) => a + b, 0);
   .latest__repo {
     color: var(--ink-soft);
     font-weight: 500;
+  }
+
+  .latest__detail:empty {
+    display: none;
   }
 
   /* Fresh activity: the line enters once when it changes */

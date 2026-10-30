@@ -1,0 +1,56 @@
+---
+/** The opening of a section page: a small label, a large title that rises in, and a lede. */
+interface Props {
+  label?: string;
+  title: string;
+  lede?: string;
+}
+
+const { label, title, lede } = Astro.props;
+---
+
+<header class="page-intro page">
+  {label && <p class="label" data-reveal="fade">{label}</p>}
+  <h1 class="page-intro__title" data-lines><span class="line"><span>{title}</span></span></h1>
+  {lede && <p class="page-intro__lede" data-reveal style="--reveal-delay:180">{lede}</p>}
+  <slot />
+</header>
+
+<style>
+  .page-intro {
+    display: grid;
+    gap: var(--space-4);
+    padding-top: clamp(var(--space-8), 10vw, 9.5rem);
+    padding-bottom: clamp(var(--space-7), 6vw, var(--space-8));
+  }
+
+  .page-intro__title {
+    font-size: clamp(3rem, 1.2rem + 7vw, 7rem);
+    line-height: 0.95;
+    font-weight: 650;
+    letter-spacing: -0.055em;
+    margin-left: -0.045em;
+  }
+
+  :lang(zh) .page-intro__title,
+  :lang(ja) .page-intro__title {
+    font-size: clamp(2.5rem, 1.2rem + 5vw, 5rem);
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    margin-left: -0.02em;
+  }
+
+  .page-intro__lede {
+    max-width: 38rem;
+    font-size: clamp(var(--step-0), 0.95rem + 0.5vw, var(--step-1));
+    line-height: 1.55;
+    color: var(--graphite);
+  }
+
+  :lang(zh) .page-intro__lede,
+  :lang(ja) .page-intro__lede {
+    max-width: 32em;
+    font-size: var(--step-0);
+    line-height: 1.9;
+  }
+</style>

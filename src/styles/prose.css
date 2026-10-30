@@ -343,3 +343,142 @@
   text-decoration: none;
   padding-inline: 0.1em;
 }
+
+/* ---------- Code: file titles, highlighted lines and diffs ----------
+ * ```ts title="src/lib/posts.ts" {3-4}
+ * // [!code highlight]   // [!code ++]   // [!code --]
+ */
+.code-block__bar > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.code-block__file {
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.code-block__lang {
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--hairline-strong);
+  font-size: 0.625rem;
+  line-height: 1.6;
+  color: var(--graphite);
+}
+
+.code-block__lang:empty {
+  display: none;
+}
+
+.prose pre code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+}
+
+.prose pre .line {
+  display: inline-block;
+  min-width: 100%;
+  margin-inline: calc(var(--space-5) * -1);
+  padding-inline: var(--space-5);
+  box-sizing: content-box;
+}
+
+.prose pre.has-highlighted .line:not(.highlighted),
+.prose pre.has-diff .line:not(.diff) {
+  opacity: 0.62;
+}
+
+.prose pre .line.highlighted {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.prose pre .line.diff.add {
+  background: color-mix(in srgb, var(--ok) 11%, transparent);
+  box-shadow: inset 2px 0 0 var(--ok);
+}
+
+.prose pre .line.diff.remove {
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  box-shadow: inset 2px 0 0 var(--warn);
+}
+
+.prose pre .line.diff.add::before,
+.prose pre .line.diff.remove::before {
+  position: absolute;
+  margin-left: -1.1em;
+  color: var(--graphite);
+}
+
+.prose pre .line.diff.add::before {
+  content: '+';
+}
+
+.prose pre .line.diff.remove::before {
+  content: '−';
+}
+
+/* ---------- Footnote previews (src/scripts/ui.ts) ---------- */
+.footnote-anchor {
+  position: relative;
+}
+
+.footnote-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  z-index: 20;
+  width: max-content;
+  max-width: min(22rem, 80vw);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-m);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  letter-spacing: 0;
+  box-shadow: var(--shadow-float);
+  transform: translate(-50%, 4px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-base) ease,
+    transform var(--dur-slow) var(--ease-expo),
+    visibility 0s linear var(--dur-base);
+}
+
+.footnote-tip p {
+  margin: 0;
+}
+
+.footnote-tip a,
+.footnote-tip code {
+  color: inherit;
+}
+
+.footnote-anchor:hover .footnote-tip,
+.footnote-anchor:focus-within .footnote-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  transition-delay: 0s;
+}
+
+/* Enlargeable images in posts */
+.prose img[data-zoom] {
+  border-radius: var(--radius-m);
+  transition: transform 600ms var(--ease-expo);
+}
+
+.prose img[data-zoom]:hover {
+  transform: scale(1.01);
+}

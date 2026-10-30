@@ -2,6 +2,7 @@
 title: 这个网站如何实时同步我的 GitHub
 description: 一个静态网站，却能保持“实时”。构建时生成 GitHub 动态的快照，浏览器再通过克制的条件请求让它保持最新。
 date: 2026-10-29
+updated: 2026-10-30
 tags: [Astro, GitHub API, TypeScript]
 pinned: true
 ---
@@ -14,7 +15,7 @@ pinned: true
 
 数据分两步到达页面。
 
-1. **构建时**，Astro 调用一次 GitHub API，获取我的仓库和最近的动态，直接渲染进 HTML。即使访客关闭了 JavaScript，也能看到完整的页面，搜索引擎收录的也是真实内容。
+1. **每次构建之前**，一个小脚本调用 GitHub API，把结果与上一次保存在 `src/data/github.json` 中的副本合并，再由 Astro 直接渲染进 HTML。即使访客关闭了 JavaScript，也能看到完整的页面，搜索引擎收录的也是真实内容。
 2. **在浏览器中**，一个小模块接着快照继续工作。它向 GitHub 询问构建之后的新内容，再把新动态合并到页面里。
 
 快照以 JSON 的形式嵌入页面，浏览器不需要再请求一次：
@@ -67,6 +68,22 @@ Webhook 是即时的，但需要一台服务器来接收，还需要某种方式
 | --- | --- | --- | --- |
 | 公开动态 API | 否 | 否 | 接近，来自最近 300 条动态 |
 | GraphQL 贡献日历 | 是 | 视个人主页设置而定 | 是 |
+
+## 当 API 在脚下悄悄改变
+
+在做这个网站的过程中，我主页上最近的几次推送突然都显示成“推送到 main”，没有提交信息，提交数也是零。我的代码没有任何改动——是 GitHub 的事件 API 不再在推送事件里附带提交列表了。
+
+修复的思路是让便宜的路径依然便宜。每个推送事件仍然带着推送前后的两个提交，所以构建脚本会用 compare API 查询这段区间。但只针对最新的 20 次推送，而且每个事件只查一次：结果会跟事件一起保存，之后的构建不会重复请求。
+
+```js title="scripts/fetch-github.mjs"
+const cmp = await gh(`/repos/${repo}/compare/${before}...${head}`);
+event.payload.enriched = {
+  count: cmp.total_commits, // [!code highlight]
+  message: cmp.commits.at(-1)?.commit.message.split('\n')[0] ?? null,
+};
+```
+
+同一个下午还定下了另外两条规则。每个数据源（仓库、事件、贡献日历）都单独获取，某一个失败时，只有它沿用已保存的副本。保存的文件会提交到仓库，所以即使构建时没有网络，显示的也仍是真实数据，只是旧一些。只要设置了用户名，网站就绝不会退回到编造的数字。
 
 ## 在两次构建之间保持更新
 

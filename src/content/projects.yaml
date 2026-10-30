@@ -2,45 +2,29 @@
 # Every field is optional. GitHub's own description is used for any
 # language you leave out.
 #
-# personal-blog:
-#   featured: true          # shown first on the home page, in file order
-#   description:
-#     zh: 这个网站本身。
-#     ja: このサイトそのもの。
-# old-experiment:
+#   featured: true          # listed first, in the order of this file
 #   hidden: true            # never listed
+#   description:            # per language
+#     en: …
+#     zh: …
+#     ja: …
+#
+# Repositories with a case study (src/work/) link to it automatically.
 
-# These entries translate the sample repositories shown before you set a
-# GitHub username. They're harmless afterwards; replace them with your own.
+OrderPilot:
+  featured: true
+  description:
+    en: Multi-tenant order and inventory SaaS. Spring Boot, Vue 3, MySQL, Redis, RabbitMQ and an AI copilot that only answers from real data.
+    zh: 多租户订单与库存 SaaS。Spring Boot、Vue 3、MySQL、Redis、RabbitMQ，以及只依据真实数据作答的 AI 助手。
+    ja: マルチテナントの受注・在庫 SaaS。Spring Boot、Vue 3、MySQL、Redis、RabbitMQ と、実データだけで答える AI コパイロット。
+OperationAgent:
+  featured: true
+  description:
+    en: Security-first desktop AI agent. Electron, TypeScript and an isolated worker process, delivered in gated phases.
+    zh: 安全优先的桌面 AI Agent。Electron、TypeScript 与隔离的 Worker 进程，按阶段门禁交付。
+    ja: セキュリティ最優先のデスクトップ AI エージェント。Electron、TypeScript、隔離された Worker プロセスを、ゲート付きのフェーズで開発。
 personal-blog:
   description:
-    zh: 这个网站本身。基于 Astro 和 TypeScript，并实时同步 GitHub API 的动态。
-    ja: このサイトそのもの。Astro と TypeScript で構築し、GitHub API からライブで更新されます。
-ledger-kit:
-  description:
-    zh: 面向 TypeScript 的复式记账基础库，支持精确的十进制运算。
-    ja: TypeScript 向けの複式簿記ライブラリ。正確な十進演算に対応。
-tidepool:
-  description:
-    zh: 离线优先的笔记应用，通过 CRDT 同步。
-    ja: CRDT で同期するオフラインファーストのノートアプリ。
-quill-api:
-  description:
-    zh: 用 Go 编写的小型 REST API，用于撰写和定时发布文章。
-    ja: 記事の下書きと予約投稿のための小さな REST API（Go 製）。
-shardcache:
-  description:
-    zh: 支持请求合并的一致性哈希缓存客户端。
-    ja: リクエストの合流に対応したコンシステントハッシュのキャッシュクライアント。
-type-scale:
-  description:
-    zh: 在命令行中生成模块化字号比例和 CSS 自定义属性。
-    ja: モジュラースケールの文字サイズと CSS カスタムプロパティをコマンドラインで生成。
-dotfiles:
-  description:
-    zh: Shell、编辑器和终端的配置文件。
-    ja: シェル、エディタ、ターミナルの設定。
-ml-notebooks:
-  description:
-    zh: 学习应用机器学习过程中的实验与笔记。
-    ja: 応用機械学習を学ぶ中での実験とノート。
+    en: This website. Astro and TypeScript in three languages, with case studies and live GitHub activity.
+    zh: 这个网站本身。基于 Astro 和 TypeScript，支持三种语言，包含项目案例和实时 GitHub 动态。
+    ja: このサイトそのもの。Astro と TypeScript による 3 言語対応で、ケーススタディと GitHub のリアルタイムなアクティビティを掲載。

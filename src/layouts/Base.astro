@@ -5,13 +5,11 @@ import '@fontsource-variable/newsreader/opsz-italic.css';
 import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import SearchDialog from '../components/SearchDialog.astro';
-import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO, localePath, splitLocale, type Locale } from '../i18n/config';
+import { DEFAULT_LOCALE, LOCALES, LOCALE_INFO, localePath, splitLocale, withBase, type Locale } from '../i18n/config';
 import { useTranslations } from '../i18n/ui';
 import { site } from '../site.config';
 
@@ -29,6 +27,8 @@ interface Props {
   alternates?: Partial<Record<Locale, string>>;
   /** Structured data for search engines. */
   jsonLd?: Record<string, unknown>;
+  /** Link preview image, as a site path without the sub-path (generated in src/pages/og/). */
+  ogImage?: string;
 }
 
 const { locale, title, description = site.description[locale], type = 'website', publishedAt, jsonLd } = Astro.props;
@@ -40,30 +40,30 @@ const alternates: Partial<Record<Locale, string>> =
   Astro.props.alternates ?? Object.fromEntries(LOCALES.map((l) => [l, localePath(l, path)]));
 
 const pageTitle = title ? `${title} | ${site.name}` : `${site.name}, ${t.meta.role}`;
-const canonical = new URL(Astro.url.pathname, Astro.site);
-const abs = (p: string) => new URL(p, Astro.site).href;
-
-// Link previews use public/og/default.png once you add one (1200 × 630).
-const ogImage = existsSync(join(process.cwd(), 'public', 'og', 'default.png')) ? abs('/og/default.png') : null;
+const origin = Astro.site ?? new URL('https://jaxlim.github.io');
+const canonical = new URL(Astro.url.pathname, origin);
+const abs = (p: string) => new URL(p, origin).href;
+const ogImage = abs(withBase(Astro.props.ogImage ?? `/og/${locale}/site.png`));
 
 // Self-hosted CJK text serifs, copied into public/fonts by scripts/copy-fonts.mjs.
-const cjkFont = { en: null, zh: '/fonts/noto-serif-sc/index.css', ja: '/fonts/noto-serif-jp/index.css' }[locale];
+const cjkFont = { en: null, zh: withBase('/fonts/noto-serif-sc/index.css'), ja: withBase('/fonts/noto-serif-jp/index.css') }[locale];
 
 // Main content cross-fades and rises; keyframes live in global.css.
 const mainAnimation = {
-  old: { name: 'vt-fade-out', duration: '160ms', easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fillMode: 'both' },
-  new: { name: 'vt-rise-in', duration: '320ms', delay: '60ms', easing: 'cubic-bezier(0.2, 0.7, 0.1, 1)', fillMode: 'both' },
+  old: { name: 'vt-fade-out', duration: '200ms', easing: 'cubic-bezier(0.65, 0, 0.35, 1)', fillMode: 'both' },
+  new: { name: 'vt-rise-in', duration: '560ms', delay: '80ms', easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fillMode: 'both' },
 };
 const mainTransition = { forwards: mainAnimation, backwards: mainAnimation };
 ---
 
 <!doctype html>
-<html lang={info.htmlLang} data-locale={locale}>
+<html lang={info.htmlLang} data-locale={locale} data-home={localePath(DEFAULT_LOCALE, '/')}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    <meta name="author" content={site.name} />
     <link rel="canonical" href={canonical} />
     {
       (Object.entries(alternates) as [Locale, string][]).map(([l, p]) => (
@@ -71,16 +71,16 @@ const mainTransition = { forwards: mainAnimation, backwards: mainAnimation };
       ))
     }
     {alternates[DEFAULT_LOCALE] && <link rel="alternate" hreflang="x-default" href={abs(alternates[DEFAULT_LOCALE]!)} />}
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={withBase('/apple-touch-icon.png')} />
     <link rel="alternate" type="application/rss+xml" title={`${site.name}: ${t.nav.writing}`} href={localePath(locale, '/rss.xml')} />
-    <link rel="sitemap" href="/sitemap-index.xml" />
-    <meta name="theme-color" content="#fafafb" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f1217" media="(prefers-color-scheme: dark)" />
+    <link rel="sitemap" href={withBase('/sitemap-index.xml')} />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0f13" media="(prefers-color-scheme: dark)" />
     {cjkFont && <link rel="stylesheet" href={cjkFont} />}
 
     <meta property="og:type" content={type} />
-    <meta property="og:title" content={title ?? site.name} />
+    <meta property="og:title" content={title ?? `${site.name}, ${t.meta.role}`} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content={site.name} />
@@ -90,31 +90,36 @@ const mainTransition = { forwards: mainAnimation, backwards: mainAnimation };
         .filter((l) => l !== locale)
         .map((l) => <meta property="og:locale:alternate" content={LOCALE_INFO[l].og} />)
     }
-    {ogImage && <meta property="og:image" content={ogImage} />}
-    {ogImage && <meta property="og:image:width" content="1200" />}
-    {ogImage && <meta property="og:image:height" content="630" />}
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={title ?? site.name} />
     {publishedAt && <meta property="article:published_time" content={publishedAt.toISOString()} />}
-    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:card" content="summary_large_image" />
     {jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
     <!--
       Before first paint:
-      1. apply the saved theme;
-      2. if the reader chose another language before, open this page in it;
-      3. on a first visit to the home page, follow the browser's language once.
+      1. mark that scripts run (reveals start hidden only then);
+      2. apply the saved theme;
+      3. if the reader chose another language before, open this page in it;
+      4. on a first visit to the home page, follow the browser's language once.
     -->
     <script is:inline>
       (() => {
+        const root = document.documentElement;
+        root.classList.add('js');
         const read = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
         const applyTheme = (doc) => {
           const theme = read('theme');
           if (theme === 'light' || theme === 'dark') doc.documentElement.dataset.theme = theme;
           else delete doc.documentElement.dataset.theme;
+          doc.documentElement.classList.add('js');
         };
         applyTheme(document);
         document.addEventListener('astro:before-swap', (e) => applyTheme(e.newDocument));
 
-        const current = document.documentElement.dataset.locale;
+        const current = root.dataset.locale;
         const saved = read('lang');
         const target = (l) => document.querySelector('link[rel=alternate][data-locale="' + l + '"]')?.dataset.path;
         if (saved && saved !== current) {
@@ -122,7 +127,7 @@ const mainTransition = { forwards: mainAnimation, backwards: mainAnimation };
           if (path) location.replace(path + location.hash);
           return;
         }
-        if (!saved && location.pathname === '/') {
+        if (!saved && location.pathname === root.dataset.home) {
           try {
             if (sessionStorage.getItem('lang-checked')) return;
             sessionStorage.setItem('lang-checked', '1');
@@ -138,14 +143,22 @@ const mainTransition = { forwards: mainAnimation, backwards: mainAnimation };
   </head>
   <body>
     <a class="skip-link" href="#main">{t.skip}</a>
+    <div class="route-progress" data-route-progress aria-hidden="true" transition:persist="route-progress"></div>
     <Header locale={locale} alternates={alternates} />
     <main id="main" transition:name="main" transition:animate={mainTransition}>
       <slot />
     </main>
     <Footer locale={locale} />
     <SearchDialog locale={locale} />
+    <dialog class="lightbox" data-lenis-prevent data-lightbox aria-label={t.article.enlarge}>
+      <figure>
+        <img alt="" />
+        <figcaption></figcaption>
+      </figure>
+    </dialog>
     <div class="toast" role="status" aria-live="polite" data-toast></div>
     <script>
+      import '../scripts/motion';
       import '../scripts/ui';
     </script>
   </body>

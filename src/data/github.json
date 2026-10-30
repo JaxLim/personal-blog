@@ -1,0 +1,337 @@
+{
+  "username": "JaxLim",
+  "sample": false,
+  "fetchedAt": "2026-10-30T10:55:49.648Z",
+  "source": "graphql+events",
+  "profile": {
+    "login": "JaxLim",
+    "name": null,
+    "avatar": "https://avatars.githubusercontent.com/u/186766578?v=4",
+    "followers": 1,
+    "publicRepos": 4,
+    "createdAt": "2024-10-29T22:49:37Z"
+  },
+  "yearTotal": 37,
+  "calendarUntil": "2026-10-30",
+  "repos": [
+    {
+      "name": "personal-blog",
+      "url": "https://github.com/JaxLim/personal-blog",
+      "description": "Personal blog and live GitHub activity, in English, Chinese and Japanese (Astro)",
+      "language": "TypeScript",
+      "stars": 0,
+      "forks": 0,
+      "pushedAt": "2026-10-30T09:15:28Z",
+      "createdAt": "2026-10-30T09:15:10Z",
+      "homepage": null,
+      "topics": [],
+      "isFork": false,
+      "isArchived": false,
+      "languages": {
+        "TypeScript": 92225,
+        "Astro": 91761,
+        "CSS": 19122,
+        "MDX": 18382,
+        "JavaScript": 5092
+      }
+    },
+    {
+      "name": "OperationAgent",
+      "url": "https://github.com/JaxLim/OperationAgent",
+      "description": "OperationAgent: Electron and TypeScript agent desktop; architecture-first staged delivery",
+      "language": "TypeScript",
+      "stars": 1,
+      "forks": 0,
+      "pushedAt": "2026-10-29T05:23:24Z",
+      "createdAt": "2026-10-23T07:59:39Z",
+      "homepage": null,
+      "topics": [],
+      "isFork": false,
+      "isArchived": false,
+      "languages": {
+        "TypeScript": 451053,
+        "JavaScript": 119488,
+        "CSS": 103553,
+        "C++": 61529,
+        "HTML": 1400
+      }
+    },
+    {
+      "name": "OrderPilot",
+      "url": "https://github.com/JaxLim/OrderPilot",
+      "description": "Multi-tenant order and inventory SaaS with Spring Boot, Vue 3 and an AI business copilot",
+      "language": "Java",
+      "stars": 1,
+      "forks": 0,
+      "pushedAt": "2026-10-28T13:09:27Z",
+      "createdAt": "2026-10-28T13:08:30Z",
+      "homepage": null,
+      "topics": [],
+      "isFork": false,
+      "isArchived": false,
+      "languages": {
+        "Java": 263559,
+        "Vue": 94783,
+        "TypeScript": 45776,
+        "CSS": 3684,
+        "Dockerfile": 879,
+        "HTML": 544
+      }
+    },
+    {
+      "name": "ARPG_DEMO",
+      "url": "https://github.com/JaxLim/ARPG_DEMO",
+      "description": null,
+      "language": "CMake",
+      "stars": 0,
+      "forks": 0,
+      "pushedAt": "2025-09-15T12:00:25Z",
+      "createdAt": "2025-09-14T13:46:51Z",
+      "homepage": null,
+      "topics": [],
+      "isFork": false,
+      "isArchived": false,
+      "languages": {
+        "CMake": 425
+      }
+    }
+  ],
+  "days": {
+    "2026-10-23": 5,
+    "2026-10-24": 2,
+    "2026-10-25": 4,
+    "2026-10-27": 3,
+    "2026-10-28": 21,
+    "2026-10-29": 1,
+    "2026-10-30": 1
+  },
+  "events": [
+    {
+      "id": "25599494804",
+      "type": "PushEvent",
+      "created_at": "2026-10-29T05:23:25Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/main",
+        "head": "e921ab48ed58becf83efa220e87c2bd6eb644a6a",
+        "before": "c8cbe5da3b6ea96d875e46d4fd96c3ab1b1d7324",
+        "enriched": {
+          "count": 22,
+          "message": "Merge P1.4-P1.7: Windows restricted Worker fixture, supervision, Workbench UI and installer"
+        }
+      }
+    },
+    {
+      "id": "25605665925",
+      "type": "PushEvent",
+      "created_at": "2026-10-29T00:59:55Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/codex/p1-worker-infrastructure",
+        "head": "5d3b2da2ae67f28bc25f7b26ef2289d57d38cfc4",
+        "before": "54f37644956a25546accc7952756d0179740e251",
+        "enriched": {
+          "count": 1,
+          "message": "docs(p1.7): keep the raw CI logs cited by the P1 exit report"
+        }
+      }
+    },
+    {
+      "id": "25578099438",
+      "type": "PushEvent",
+      "created_at": "2026-10-29T00:30:58Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/codex/p1-worker-infrastructure",
+        "head": "ce6b33d27d8ee2a3d00a95d79b68c24251457707",
+        "before": "06cbe500cf7a50bc50284cd7dee6b6ca6646c318",
+        "enriched": {
+          "count": 1,
+          "message": "fix(p1.4): preserve symlinks for the AppContainer Worker and capture bounded stderr"
+        }
+      }
+    },
+    {
+      "id": "25589515368",
+      "type": "PushEvent",
+      "created_at": "2026-10-29T00:22:57Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/codex/p1-worker-infrastructure",
+        "head": "06cbe500cf7a50bc50284cd7dee6b6ca6646c318",
+        "before": "1a665ab5904159ecbd389a8a3c9c39ede45a4440",
+        "enriched": {
+          "count": 1,
+          "message": "fix(p1.4): give the AppContainer Worker NUL stdio so Node can start"
+        }
+      }
+    },
+    {
+      "id": "25602703795",
+      "type": "PushEvent",
+      "created_at": "2026-10-29T00:11:59Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/codex/p1-worker-infrastructure",
+        "head": "877d418a623c55d1cd96071f18930ff1a702677d",
+        "before": "2788d8406cb10e13676d0a9735b9bb5eb62f3928",
+        "enriched": {
+          "count": 1,
+          "message": "fix(p1.6): keep electron-builder dependency detection off the pnpm workspace"
+        }
+      }
+    },
+    {
+      "id": "25573460127",
+      "type": "PushEvent",
+      "created_at": "2026-10-29T00:09:08Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/codex/p1-worker-infrastructure",
+        "head": "2788d8406cb10e13676d0a9735b9bb5eb62f3928",
+        "before": "a9191f1acb16f7c52aacd50a200e5d36b7302b3d",
+        "enriched": {
+          "count": 1,
+          "message": "fix(p1.6): keep the frozen P0 builder config and layer Windows settings on top"
+        }
+      }
+    },
+    {
+      "id": "25579597078",
+      "type": "PushEvent",
+      "created_at": "2026-10-29T00:08:14Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/codex/p1-worker-infrastructure",
+        "head": "a9191f1acb16f7c52aacd50a200e5d36b7302b3d",
+        "before": "3e8687a52eacff7a533a307cc07c70c8757011aa",
+        "enriched": {
+          "count": 1,
+          "message": "feat(p1.6): Windows NSIS installer, installed smoke test and restricted fixture token"
+        }
+      }
+    },
+    {
+      "id": "25601449441",
+      "type": "PushEvent",
+      "created_at": "2026-10-28T23:57:15Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/codex/p1-worker-infrastructure",
+        "head": "3e8687a52eacff7a533a307cc07c70c8757011aa",
+        "before": "9250c365fdcec23451714829ad9a0e2c33f9f8ab",
+        "enriched": {
+          "count": 2,
+          "message": "feat(p1): integrate the Workbench UI with the real control plane"
+        }
+      }
+    },
+    {
+      "id": "25520008119",
+      "type": "PushEvent",
+      "created_at": "2026-10-28T15:15:22Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/codex/p1-foundation",
+        "head": "8ece74357c1b414d9e874fdb834ff95eb993a065",
+        "before": "2b7da672d94c542f3e1a73272f22a915a6217058",
+        "enriched": {
+          "count": 4,
+          "message": "Merge pull request #2 from JaxLim/codex/p1-control-plane"
+        }
+      }
+    },
+    {
+      "id": "18476162366",
+      "type": "PullRequestEvent",
+      "created_at": "2026-10-28T15:15:20Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "action": "merged",
+        "pull_request": {
+          "number": 2
+        }
+      }
+    },
+    {
+      "id": "25519513640",
+      "type": "PushEvent",
+      "created_at": "2026-10-28T15:15:12Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "ref": "refs/heads/main",
+        "head": "c8cbe5da3b6ea96d875e46d4fd96c3ab1b1d7324",
+        "before": "04d07bea89b70265a6b1fb1d79272b710623775b",
+        "enriched": {
+          "count": 3,
+          "message": "Merge pull request #1 from JaxLim/codex/p1-foundation"
+        }
+      }
+    },
+    {
+      "id": "18470948260",
+      "type": "PullRequestEvent",
+      "created_at": "2026-10-28T15:15:10Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {
+        "action": "merged",
+        "pull_request": {
+          "number": 1
+        }
+      }
+    },
+    {
+      "id": "18468590950",
+      "type": "PublicEvent",
+      "created_at": "2026-10-28T13:08:30Z",
+      "repo": {
+        "name": "JaxLim/OrderPilot"
+      },
+      "payload": {}
+    },
+    {
+      "id": "18476875518",
+      "type": "PublicEvent",
+      "created_at": "2026-10-23T07:59:39Z",
+      "repo": {
+        "name": "JaxLim/OperationAgent"
+      },
+      "payload": {}
+    },
+    {
+      "id": "17720884233",
+      "type": "WatchEvent",
+      "created_at": "2026-10-20T15:11:38Z",
+      "repo": {
+        "name": "anomalyco/opencode"
+      },
+      "payload": {
+        "action": "started"
+      }
+    }
+  ]
+}

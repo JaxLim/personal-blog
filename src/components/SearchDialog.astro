@@ -4,7 +4,7 @@
  * repositories in the current language. The index (/search/<lang>.json)
  * loads the first time the palette opens. Behaviour: src/scripts/search.ts.
  */
-import type { Locale } from '../i18n/config';
+import { withBase, type Locale } from '../i18n/config';
 import { useTranslations } from '../i18n/ui';
 
 interface Props {
@@ -21,7 +21,7 @@ const strings = JSON.stringify({
 });
 ---
 
-<dialog class="search" aria-labelledby="search-title" data-search data-index={`/search/${locale}.json`} data-strings={strings}>
+<dialog class="search" aria-labelledby="search-title" data-lenis-prevent data-search data-index={withBase(`/search/${locale}.json`)} data-strings={strings}>
   <div class="search__panel">
     <h2 class="visually-hidden" id="search-title">{t.search.title}</h2>
     <div class="search__field">

@@ -377,3 +377,490 @@ pre,
   scrollbar-width: thin;
   scrollbar-color: var(--hairline-strong) transparent;
 }
+
+/* ==================================================================
+ * Shared building blocks for the portfolio: labels, buttons, section
+ * heads, reveals and smooth scrolling.
+ * ================================================================== */
+
+/* Mono label: small, spaced capitals for indices and metadata */
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--step-label);
+  font-weight: 500;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--graphite);
+  line-height: 1.4;
+}
+
+:lang(zh) .label,
+:lang(ja) .label {
+  font-family: var(--font-mono), var(--font-sans);
+  letter-spacing: 0.04em;
+}
+
+.label--accent {
+  color: var(--accent);
+}
+
+/* A live dot: steady, with a soft ring that breathes */
+.live-dot {
+  position: relative;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.live-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .live-dot::after {
+    animation: live-ring 2.6s var(--ease-out) 1s infinite;
+  }
+}
+
+@keyframes live-ring {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.5);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* ---------- Buttons ----------
+ * Pills. The label rolls up on hover: the visible copy slides out and an
+ * identical copy (drawn from data-text) slides in from below.
+ */
+.btn {
+  --btn-bg: var(--ink);
+  --btn-fg: var(--paper);
+  --btn-border: var(--ink);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 2.875rem;
+  padding: 0 1.15rem 0 1.3rem;
+  border: 1px solid var(--btn-border);
+  border-radius: 999px;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-size: var(--step--1);
+  font-weight: 550;
+  letter-spacing: var(--track-ui);
+  white-space: nowrap;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    background-color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    color var(--dur-base) ease,
+    transform var(--dur-slow) var(--ease-expo);
+}
+
+.btn--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--ink);
+  --btn-border: var(--hairline-strong);
+}
+
+.btn--ghost:hover {
+  --btn-border: var(--ink);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn__icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  transition: transform var(--dur-slow) var(--ease-expo);
+}
+
+.btn:hover .btn__icon--down {
+  transform: translateY(2px);
+}
+
+.btn:hover .btn__icon--right {
+  transform: translateX(3px);
+}
+
+.roll {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  line-height: 1.25;
+  vertical-align: top;
+}
+
+.roll > span {
+  display: block;
+  transition: transform 520ms var(--ease-expo);
+}
+
+.roll > span::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 100%;
+}
+
+:is(a, button):hover > .roll > span,
+:is(a, button):focus-visible > .roll > span {
+  transform: translateY(-100%);
+}
+
+/* ---------- Section heads ---------- */
+.section {
+  padding-block: clamp(var(--space-8), 9vw, 8.5rem);
+}
+
+.section + .section {
+  border-top: 1px solid var(--hairline);
+}
+
+.section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-bottom: clamp(var(--space-6), 5vw, var(--space-8));
+}
+
+.section-head__title {
+  font-size: var(--step-5);
+  line-height: 1.02;
+  font-weight: 620;
+  letter-spacing: -0.04em;
+}
+
+:lang(zh) .section-head__title,
+:lang(ja) .section-head__title {
+  letter-spacing: 0;
+  line-height: 1.2;
+  font-weight: 600;
+  font-size: clamp(2rem, 1.2rem + 3vw, 3.25rem);
+}
+
+.section-head__note {
+  max-width: 34rem;
+  color: var(--graphite);
+  font-size: var(--step-0);
+  line-height: 1.55;
+}
+
+.section-head__link {
+  justify-self: start;
+}
+
+@media (min-width: 52rem) {
+  .section-head {
+    grid-template-columns: minmax(12rem, 3fr) minmax(0, 9fr);
+    column-gap: var(--space-6);
+    align-items: end;
+  }
+
+  .section-head .label {
+    align-self: start;
+    padding-top: 0.6em;
+  }
+
+  .section-head__body {
+    display: grid;
+    gap: var(--space-4);
+  }
+}
+
+/* Registration marks: small crosses at the corners of a framed area,
+   like the trim marks on a print proof. */
+.marks {
+  position: relative;
+}
+
+.marks::before,
+.marks::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background:
+    linear-gradient(var(--graphite-soft), var(--graphite-soft)) center / 1px 100% no-repeat,
+    linear-gradient(var(--graphite-soft), var(--graphite-soft)) center / 100% 1px no-repeat;
+  pointer-events: none;
+}
+
+.marks::before {
+  top: -5px;
+  left: -5px;
+}
+
+.marks::after {
+  top: -5px;
+  right: -5px;
+}
+
+/* ---------- Reveals ----------
+ * Elements marked data-reveal start slightly lowered and transparent, and
+ * settle when they scroll into view (src/scripts/motion.ts). Without
+ * JavaScript, or with reduced motion, they are simply shown.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html.js [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity var(--dur-reveal) var(--ease-expo),
+      transform calc(var(--dur-reveal) * 1.2) var(--ease-expo);
+    transition-delay: calc(var(--reveal-delay, 0) * 1ms);
+  }
+
+  html.js [data-reveal='fade'] {
+    transform: none;
+  }
+
+  html.js [data-reveal='scale'] {
+    transform: translateY(32px) scale(0.97);
+  }
+
+  html.js [data-reveal].is-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Headlines: each line rises from behind a mask */
+  html.js [data-lines] .line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.06em;
+    margin-bottom: -0.06em;
+  }
+
+  html.js [data-lines] .line > span {
+    display: block;
+    transform: translateY(105%);
+    transition: transform 1.1s var(--ease-expo);
+    transition-delay: calc(var(--i, 0) * 90ms + var(--lines-delay, 0ms));
+  }
+
+  html.js [data-lines].is-in .line > span {
+    transform: none;
+  }
+}
+
+[data-lines] .line {
+  display: block;
+}
+
+/* ---------- Marquee ---------- */
+.marquee {
+  --gap: 3rem;
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.marquee__track {
+  display: flex;
+  flex: none;
+  gap: var(--gap);
+  min-width: 100%;
+  padding-right: var(--gap);
+  justify-content: space-around;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marquee__track {
+    animation: marquee 48s linear infinite;
+  }
+
+  .marquee:hover .marquee__track {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+/* ---------- Frames: screenshots in a quiet window chrome ---------- */
+.frame {
+  position: relative;
+  border-radius: var(--radius-l);
+  border: 1px solid var(--hairline);
+  background: var(--paper-raised);
+  box-shadow:
+    0 1px 2px rgb(21 23 28 / 0.04),
+    0 24px 48px -24px rgb(21 23 28 / 0.18);
+  overflow: hidden;
+}
+
+.frame__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 2rem;
+  padding-inline: var(--space-3);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--paper-tint);
+}
+
+.frame__dots {
+  display: flex;
+  gap: 5px;
+}
+
+.frame__dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hairline-strong);
+}
+
+.frame__title {
+  flex: 1;
+  text-align: center;
+  margin-right: 26px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--graphite-soft);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.frame img {
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- Navigation progress: a hairline across the top while a page loads ---------- */
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: left;
+  transform: scaleX(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.route-progress[data-state='loading'] {
+  opacity: 1;
+  transform: scaleX(0.7);
+  transition: transform 2.4s cubic-bezier(0.1, 0.6, 0.2, 1);
+}
+
+.route-progress[data-state='done'] {
+  opacity: 0;
+  transform: scaleX(1);
+  transition:
+    transform 200ms ease,
+    opacity 300ms ease 200ms;
+}
+
+/* ---------- Lightbox for enlarged images ---------- */
+.lightbox {
+  width: min(96vw, 90rem);
+  max-width: none;
+  max-height: 92vh;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.lightbox::backdrop {
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.lightbox img {
+  width: 100%;
+  max-height: 86vh;
+  object-fit: contain;
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-dialog);
+}
+
+.lightbox figcaption {
+  margin-top: var(--space-3);
+  text-align: center;
+  font-size: var(--step--1);
+  color: var(--graphite);
+}
+
+.lightbox[open] {
+  animation: lightbox-in 420ms var(--ease-expo);
+}
+
+@keyframes lightbox-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+[data-zoom] {
+  cursor: zoom-in;
+}
+
+/* ---------- Smooth scrolling (Lenis) ---------- */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Chips: small rounded tags for stacks and topics */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+}
+
+.chips li {
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: var(--step--2);
+  color: var(--ink-soft);
+  background: var(--paper-raised);
+  white-space: nowrap;
+}

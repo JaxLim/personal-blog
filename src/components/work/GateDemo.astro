@@ -1,0 +1,271 @@
+---
+/**
+ * The worker isolation gate, as a console. Start a task the way the app
+ * does today and it is refused before anything runs; flip the gate to see
+ * the path a verified build unlocks.
+ */
+import type { Locale } from '../../i18n/config';
+import { useTranslations } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const strings = { start: t.gate.start, again: t.gate.again, blocked: t.gate.blocked, passed: t.gate.passed };
+
+// Log lines are English, as in the app's own diagnostics.
+const common = [
+  ['in', 'POST /api/tasks { project: "demo" }'],
+  ['dim', 'preload  shape ok → main'],
+  ['dim', 'main     senderFrame ok · forward 127.0.0.1 (authenticated)'],
+  ['dim', 'control  identity ok · express run 5428661a'],
+];
+const blocked = [
+  ...common,
+  ['warn', 'control  worker gate SEC-W01 … not passed on win32-x64'],
+  ['dim', 'control  agentReady=false · no worker started'],
+  ['err', '✕ 409 WORKER_ISOLATION_UNAVAILABLE'],
+];
+const passed = [
+  ...common,
+  ['ok', 'control  worker gate SEC-W01 … passed'],
+  ['dim', 'launcher AppContainer + Job object · 1 inherited pipe (OWIP/1)'],
+  ['dim', 'worker   handshake ok · role=agent · no listening ports'],
+  ['ok', '✓ 202 accepted · tools route back through the control plane'],
+];
+---
+
+<div class="gate" data-gate>
+  <div class="gate__controls">
+    <button type="button" class="switch" role="switch" aria-checked="false" data-gate-switch>
+      <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
+      <span>{t.gate.toggle}</span>
+    </button>
+    <button type="button" class="btn" data-gate-run>
+      <svg class="btn__icon" viewBox="0 0 14 14" aria-hidden="true"><path d="M4.5 3v8l6-4z" fill="currentColor"></path></svg>
+      <span data-gate-label>{t.gate.start}</span>
+    </button>
+  </div>
+  <p class="gate__note">{t.gate.toggleNote}</p>
+
+  <div class="console" role="log" aria-live="polite" translate="no">
+    <div class="console__bar"><span class="frame__dots"><i></i><i></i><i></i></span><span>operationagent · diagnostics</span></div>
+    <ol class="console__lines" data-gate-lines>
+      <li class="is-dim">ready · control plane connected</li>
+    </ol>
+  </div>
+  <p class="gate__result" data-gate-result></p>
+
+  <script type="application/json" data-gate-data set:html={JSON.stringify({ blocked, passed, strings })} />
+</div>
+
+<script>
+  function mount(root: HTMLElement) {
+    if (root.dataset.bound) return;
+    root.dataset.bound = '1';
+    const data = JSON.parse(root.querySelector('[data-gate-data]')!.textContent!) as {
+      blocked: [string, string][];
+      passed: [string, string][];
+      strings: { start: string; again: string; blocked: string; passed: string };
+    };
+    const sw = root.querySelector<HTMLButtonElement>('[data-gate-switch]')!;
+    const run = root.querySelector<HTMLButtonElement>('[data-gate-run]')!;
+    const label = root.querySelector<HTMLElement>('[data-gate-label]')!;
+    const list = root.querySelector<HTMLElement>('[data-gate-lines]')!;
+    const result = root.querySelector<HTMLElement>('[data-gate-result]')!;
+    let timers: number[] = [];
+
+    sw.addEventListener('click', () => {
+      sw.setAttribute('aria-checked', String(sw.getAttribute('aria-checked') !== 'true'));
+    });
+
+    run.addEventListener('click', () => {
+      timers.forEach((id) => window.clearTimeout(id));
+      timers = [];
+      const open = sw.getAttribute('aria-checked') === 'true';
+      const lines = open ? data.passed : data.blocked;
+      const fast = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      list.replaceChildren();
+      result.textContent = '';
+      root.removeAttribute('data-state');
+      run.disabled = true;
+      lines.forEach(([kind, text], i) => {
+        timers.push(
+          window.setTimeout(() => {
+            const li = document.createElement('li');
+            li.className = `is-${kind}`;
+            li.textContent = text;
+            list.append(li);
+            if (i === lines.length - 1) {
+              root.dataset.state = open ? 'passed' : 'blocked';
+              result.textContent = open ? data.strings.passed : data.strings.blocked;
+              run.disabled = false;
+              label.textContent = data.strings.again;
+            }
+          }, fast ? 0 : 260 + i * 380),
+        );
+      });
+    });
+
+    document.addEventListener('astro:before-swap', () => timers.forEach((id) => window.clearTimeout(id)), { once: true });
+  }
+
+  document.addEventListener('astro:page-load', () => document.querySelectorAll<HTMLElement>('[data-gate]').forEach(mount));
+</script>
+
+<style>
+  .gate {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    padding: clamp(var(--space-4), 3vw, var(--space-6));
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-xl);
+    background: var(--paper-tint);
+  }
+
+  .gate__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .gate .btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
+  .gate__note {
+    margin-top: calc(var(--space-2) * -1);
+    font-size: var(--step--1);
+    color: var(--graphite);
+  }
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--step--1);
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .switch__track {
+    position: relative;
+    width: 2.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: var(--hairline-strong);
+    transition: background-color var(--dur-base) ease;
+  }
+
+  .switch__thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: calc(1.5rem - 6px);
+    height: calc(1.5rem - 6px);
+    border-radius: 50%;
+    background: var(--paper-raised);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+    transition: transform 420ms var(--ease-spring);
+  }
+
+  .switch[aria-checked='true'] .switch__track {
+    background: var(--ok);
+  }
+
+  .switch[aria-checked='true'] .switch__thumb {
+    transform: translateX(1rem);
+  }
+
+  .console {
+    border-radius: var(--radius-l);
+    background: #0f1115;
+    color: #c9ced8;
+    overflow: hidden;
+    box-shadow: 0 24px 48px -32px rgb(0 0 0 / 0.5);
+  }
+
+  .console__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: #7d8494;
+  }
+
+  .console__bar :global(.frame__dots i) {
+    background: #2b2f38;
+  }
+
+  .console__lines {
+    min-height: 13.5rem;
+    margin: 0;
+    padding: var(--space-4) var(--space-5);
+    list-style: none;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.85;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .console__lines :global(li) {
+    animation: line-in 320ms var(--ease-expo);
+  }
+
+  .console__lines :global(.is-in) {
+    color: #ffffff;
+  }
+
+  .console__lines :global(.is-in::before) {
+    content: '> ';
+    color: #93a6ff;
+  }
+
+  .console__lines :global(.is-dim) {
+    color: #8c93a3;
+  }
+
+  .console__lines :global(.is-warn) {
+    color: #f5c46b;
+  }
+
+  .console__lines :global(.is-err) {
+    color: #ff8a72;
+    font-weight: 600;
+  }
+
+  .console__lines :global(.is-ok) {
+    color: #6ee0a4;
+  }
+
+  @keyframes line-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  .gate__result {
+    min-height: 1.6em;
+    font-weight: 500;
+  }
+
+  .gate[data-state='blocked'] .gate__result {
+    color: var(--warn);
+  }
+
+  .gate[data-state='passed'] .gate__result {
+    color: var(--ok);
+  }
+</style>

@@ -3,12 +3,14 @@ import { render } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Toc from '../components/Toc.astro';
 import Callout from '../components/Callout.astro';
+import Figure from '../components/Figure.astro';
 import '../styles/prose.css';
 import { getPosts, getTranslations, parsePostId, postUrl, readingMinutes, tagSlug, type Post } from '../lib/posts';
 import { formatLongDate } from '../lib/format';
 import { LOCALES, LOCALE_INFO, localePath, type Locale } from '../i18n/config';
 import { useTranslations } from '../i18n/ui';
 import { site } from '../site.config';
+import { caseStudies, caseStudyUrl } from '../work';
 
 interface Props {
   post: Post;
@@ -26,6 +28,8 @@ const alternates = Object.fromEntries(
   LOCALES.filter((l) => translations[l]).map((l) => [l, postUrl(translations[l]!)]),
 ) as Partial<Record<Locale, string>>;
 const others = LOCALES.filter((l) => l !== locale && translations[l]);
+
+const related = post.data.project ? caseStudies.find((s) => s.slug === post.data.project) : undefined;
 
 const listing = await getPosts(locale);
 const index = listing.findIndex((p) => p.slug === slug);
@@ -46,7 +50,16 @@ const jsonLd = {
 };
 ---
 
-<Base locale={locale} title={title} description={description} type="article" publishedAt={date} alternates={alternates} jsonLd={jsonLd}>
+<Base
+  locale={locale}
+  title={title}
+  description={description}
+  type="article"
+  publishedAt={date}
+  alternates={alternates}
+  jsonLd={jsonLd}
+  ogImage={`/og/${locale}/posts/${slug}.png`}
+>
   <article class="page article">
     <header class="article__head">
       <a class="article__back link" href={localePath(locale, '/writing/')}>{t.nav.writing}</a>
@@ -117,10 +130,22 @@ const jsonLd = {
           )
         }
       </dl>
+      <div class="article__toc-inline">
+        <Toc headings={headings} locale={locale} variant="inline" />
+      </div>
     </aside>
 
-    <div class="article__body prose" data-prose data-labels={JSON.stringify({ copy: t.article.copy, copied: t.article.copied, copyCode: t.article.copyCode, linkCopied: t.article.linkCopied })}>
-      <Content components={{ Callout }} />
+    <div class="article__body prose" data-prose data-minutes={minutes} data-labels={JSON.stringify({ copy: t.article.copy, copied: t.article.copied, copyCode: t.article.copyCode, linkCopied: t.article.linkCopied })}>
+      <Content components={{ Callout, Figure }} />
+      {
+        related && (
+          <a class="related" href={caseStudyUrl(related, locale)}>
+            <span class="label">{t.article.related}</span>
+            <span class="related__name" translate="no">{related.name}</span>
+            <span class="related__tag">{related.tagline[locale]}</span>
+          </a>
+        )
+      }
     </div>
 
     <div class="article__toc">
@@ -186,6 +211,51 @@ const jsonLd = {
 
   .article__toc {
     display: none;
+  }
+
+  .article__toc-inline {
+    margin-top: var(--space-5);
+  }
+
+  @media (min-width: 76rem) {
+    .article__toc-inline {
+      display: none;
+    }
+  }
+
+  /* The case study a post belongs to */
+  .related {
+    display: grid;
+    gap: var(--space-1);
+    margin-top: var(--space-8);
+    padding: var(--space-5);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-l);
+    background: var(--paper-tint);
+    text-decoration: none;
+    transition:
+      border-color var(--dur-base) ease,
+      transform 600ms var(--ease-expo);
+  }
+
+  .related:hover {
+    border-color: var(--hairline-strong);
+    transform: translateY(-2px);
+  }
+
+  .related__name {
+    font-family: var(--font-sans);
+    font-size: var(--step-2);
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+
+  .related__tag {
+    font-family: var(--font-sans);
+    font-size: var(--step--1);
+    line-height: 1.55;
+    color: var(--graphite);
   }
 
   .article__more {
@@ -324,16 +394,21 @@ const jsonLd = {
 
   .more {
     display: grid;
-    gap: var(--space-1);
+    gap: var(--space-2);
     align-content: start;
-    padding: var(--space-4);
-    margin: calc(var(--space-4) * -1);
-    border-radius: var(--radius-m);
-    transition: background-color var(--dur-base) ease;
+    padding: var(--space-5);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-l);
+    transition:
+      border-color var(--dur-base) ease,
+      background-color var(--dur-base) ease,
+      transform 600ms var(--ease-expo);
   }
 
   .more:hover {
-    background: var(--paper-sunken);
+    background: var(--paper-tint);
+    border-color: var(--hairline-strong);
+    transform: translateY(-2px);
   }
 
   .more--newer {
@@ -341,7 +416,10 @@ const jsonLd = {
   }
 
   .more__label {
-    font-size: var(--step--2);
+    font-family: var(--font-mono);
+    font-size: var(--step-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
     color: var(--graphite);
   }
 

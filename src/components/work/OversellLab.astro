@@ -1,0 +1,416 @@
+---
+/**
+ * Forty buyers, ten units. A small, honest simulation of the race that
+ * oversells stock: with read-then-write, buyers who read the same count all
+ * succeed; with one conditional UPDATE, the database decides one at a time.
+ */
+import type { Locale } from '../../i18n/config';
+import { useTranslations } from '../../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const BUYERS = 40;
+
+// Result sentences as templates: {o} orders, {v} oversold.
+const strings = {
+  run: t.oversell.run,
+  again: t.oversell.again,
+  running: t.oversell.running,
+  naive: t.oversell.resultNaive(111, 222).replace('111', '{o}').replace('222', '{v}'),
+  lucky: t.oversell.resultNaive(111, 0).replace('111', '{o}'),
+  atomic: t.oversell.resultAtomic(111).replace('111', '{o}'),
+};
+
+const naiveCode = `<span class="c">// Two requests can read the same number here.</span>
+<span class="k">int</span> available = jdbc.queryForObject(
+    <span class="s">"SELECT available FROM inventory WHERE sku = ?"</span>, ...);
+<span class="k">if</span> (available &gt;= qty) {
+    jdbc.update(<span class="s">"UPDATE inventory SET available = ? WHERE sku = ?"</span>,
+        available - qty, sku);
+    createOrder();
+}`;
+
+const atomicCode = `<span class="c">// The check and the decrement are one statement.</span>
+<span class="k">int</span> rows = jdbc.update(<span class="s">"""
+    UPDATE inventory
+       SET available = available - ?
+     WHERE sku = ? AND available &gt;= ?"""</span>, qty, sku, qty);
+<span class="k">if</span> (rows == 0) <span class="k">throw new</span> InsufficientStock(sku);
+createOrder(); <span class="c">// same transaction</span>`;
+---
+
+<div class="lab" data-lab data-mode="naive">
+  <div class="lab__top">
+    <div class="segmented" role="group" aria-label={t.oversell.mode} data-lab-mode>
+      <button type="button" aria-pressed="true" data-mode="naive">{t.oversell.naive}</button>
+      <button type="button" aria-pressed="false" data-mode="atomic">{t.oversell.atomic}</button>
+    </div>
+    <button type="button" class="btn" data-lab-run>
+      <svg class="btn__icon" viewBox="0 0 14 14" aria-hidden="true"><path d="M4.5 3v8l6-4z" fill="currentColor"></path></svg>
+      <span data-lab-run-label>{t.oversell.run}</span>
+    </button>
+  </div>
+
+  <div class="lab__body">
+    <div class="lab__code">
+      <pre class="lab__snippet" data-snippet="naive" translate="no"><code set:html={naiveCode} /></pre>
+      <pre class="lab__snippet" data-snippet="atomic" translate="no" hidden><code set:html={atomicCode} /></pre>
+    </div>
+
+    <div class="lab__viz">
+      <dl class="lab__counts">
+        <div><dt>{t.oversell.stock}</dt><dd data-count-stock>10</dd></div>
+        <div><dt>{t.oversell.orders}</dt><dd data-count-orders>0</dd></div>
+        <div><dt>{t.oversell.rejected}</dt><dd data-count-rejected>0</dd></div>
+        <div class="lab__over"><dt>{t.oversell.oversold}</dt><dd data-count-over>0</dd></div>
+      </dl>
+      <ol class="lab__grid" aria-label={t.oversell.buyers}>
+        {Array.from({ length: BUYERS }, (_, i) => <li data-buyer={i} />)}
+      </ol>
+      <ul class="lab__legend">
+        <li><i class="is-ok"></i>{t.oversell.legendOk}</li>
+        <li><i class="is-no"></i>{t.oversell.legendNo}</li>
+        <li><i class="is-over"></i>{t.oversell.legendOver}</li>
+        <li><i></i>{t.oversell.legendWait}</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="lab__result" aria-live="polite" data-lab-result></p>
+  <script type="application/json" data-lab-strings set:html={JSON.stringify(strings)} />
+</div>
+
+<script>
+  type Mode = 'naive' | 'atomic';
+  interface Outcome {
+    buyer: number;
+    at: number;
+    result: 'ok' | 'no' | 'over';
+    stock: number;
+  }
+
+  const STOCK = 10;
+  const BUYERS = 40;
+
+  /** Runs the race in simulated time and returns what happened, in order. */
+  function simulate(mode: Mode): Outcome[] {
+    const buyers = Array.from({ length: BUYERS }, (_, i) => {
+      // Arrivals spread over 3 s; each request takes 80–300 ms between its read and its write.
+      const read = Math.random() * 3000;
+      return { i, read, write: read + 80 + Math.random() * 220 };
+    });
+    let stock = STOCK;
+    const out: Outcome[] = [];
+    if (mode === 'atomic') {
+      // The database applies each conditional UPDATE on its own.
+      for (const b of [...buyers].sort((a, c) => a.write - c.write)) {
+        const ok = stock >= 1;
+        if (ok) stock -= 1;
+        out.push({ buyer: b.i, at: b.write, result: ok ? 'ok' : 'no', stock });
+      }
+      return out;
+    }
+    // Read, then write later: each buyer acts on the number it saw.
+    type Ev = { t: number; kind: 'read' | 'write'; b: number };
+    const events: Ev[] = buyers.flatMap((b) => [
+      { t: b.read, kind: 'read' as const, b: b.i },
+      { t: b.write, kind: 'write' as const, b: b.i },
+    ]);
+    events.sort((a, c) => a.t - c.t);
+    const seen = new Map<number, number>();
+    let sold = 0;
+    for (const e of events) {
+      if (e.kind === 'read') {
+        seen.set(e.b, stock);
+        continue;
+      }
+      const saw = seen.get(e.b)!;
+      if (saw >= 1) {
+        stock = saw - 1; // overwrites whatever another buyer wrote
+        sold += 1;
+        out.push({ buyer: e.b, at: e.t, result: sold > STOCK ? 'over' : 'ok', stock });
+      } else {
+        out.push({ buyer: e.b, at: e.t, result: 'no', stock });
+      }
+    }
+    return out;
+  }
+
+  function mount(root: HTMLElement) {
+    if (root.dataset.bound) return;
+    root.dataset.bound = '1';
+    const strings = JSON.parse(root.querySelector('[data-lab-strings]')!.textContent!) as {
+      run: string;
+      again: string;
+      running: string;
+      naive: string;
+      lucky: string;
+      atomic: string;
+    };
+    const cells = [...root.querySelectorAll<HTMLElement>('[data-buyer]')];
+    const runBtn = root.querySelector<HTMLButtonElement>('[data-lab-run]')!;
+    const runLabel = root.querySelector<HTMLElement>('[data-lab-run-label]')!;
+    const result = root.querySelector<HTMLElement>('[data-lab-result]')!;
+    const counts = {
+      stock: root.querySelector<HTMLElement>('[data-count-stock]')!,
+      orders: root.querySelector<HTMLElement>('[data-count-orders]')!,
+      rejected: root.querySelector<HTMLElement>('[data-count-rejected]')!,
+      over: root.querySelector<HTMLElement>('[data-count-over]')!,
+    };
+    let mode: Mode = 'naive';
+    let timers: number[] = [];
+
+    const reset = () => {
+      timers.forEach((id) => window.clearTimeout(id));
+      timers = [];
+      cells.forEach((c) => (c.className = ''));
+      counts.stock.textContent = String(STOCK);
+      counts.orders.textContent = '0';
+      counts.rejected.textContent = '0';
+      counts.over.textContent = '0';
+      result.textContent = '';
+      root.removeAttribute('data-oversold');
+    };
+
+    root.querySelector('[data-lab-mode]')!.addEventListener('click', (e) => {
+      const btn = (e.target as Element).closest<HTMLButtonElement>('[data-mode]');
+      if (!btn) return;
+      mode = btn.dataset.mode as Mode;
+      root.dataset.mode = mode;
+      root.querySelectorAll('[data-lab-mode] button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      root.querySelectorAll<HTMLElement>('[data-snippet]').forEach((s) => (s.hidden = s.dataset.snippet !== mode));
+      reset();
+      runLabel.textContent = strings.run;
+    });
+
+    runBtn.addEventListener('click', () => {
+      reset();
+      const outcomes = simulate(mode);
+      const fast = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const span = outcomes.at(-1)!.at;
+      runBtn.disabled = true;
+      runLabel.textContent = strings.running;
+      cells.forEach((c) => c.classList.add('is-wait'));
+      let orders = 0;
+      let rejected = 0;
+      let over = 0;
+      outcomes.forEach((o, k) => {
+        const delay = fast ? 0 : (o.at / span) * 2200 + k * 8;
+        timers.push(
+          window.setTimeout(() => {
+            const cell = cells[o.buyer];
+            cell.className = `is-${o.result}`;
+            if (o.result === 'no') rejected++;
+            else orders++;
+            if (o.result === 'over') {
+              over++;
+              root.setAttribute('data-oversold', '');
+            }
+            counts.stock.textContent = String(o.stock);
+            counts.orders.textContent = String(orders);
+            counts.rejected.textContent = String(rejected);
+            counts.over.textContent = String(over);
+            if (k === outcomes.length - 1) {
+              runBtn.disabled = false;
+              runLabel.textContent = strings.again;
+              const template = mode === 'atomic' ? strings.atomic : over > 0 ? strings.naive : strings.lucky;
+              result.textContent = template.replace('{o}', String(orders)).replace('{v}', String(over));
+            }
+          }, delay),
+        );
+      });
+    });
+
+    document.addEventListener('astro:before-swap', reset, { once: true });
+  }
+
+  document.addEventListener('astro:page-load', () => document.querySelectorAll<HTMLElement>('[data-lab]').forEach(mount));
+</script>
+
+<style>
+  .lab {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    padding: clamp(var(--space-4), 3vw, var(--space-6));
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-xl);
+    background: var(--paper-tint);
+  }
+
+  .lab__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .lab .btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
+  .lab__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+
+  .lab__code,
+  .lab__viz {
+    min-width: 0;
+  }
+
+  @media (max-width: 30rem) {
+    .lab__counts {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 60rem) {
+    .lab__body {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  .lab__snippet {
+    margin: 0;
+    padding: var(--space-4) var(--space-5);
+    border-radius: var(--radius-l);
+    background: var(--paper-raised);
+    border: 1px solid var(--hairline);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    overflow-x: auto;
+  }
+
+  .lab__snippet :global(.c) {
+    color: var(--graphite-soft);
+  }
+
+  .lab__snippet :global(.s) {
+    color: var(--accent);
+  }
+
+  .lab__snippet :global(.k) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .lab__counts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .lab__counts dt {
+    font-size: var(--step--2);
+    color: var(--graphite);
+    line-height: 1.3;
+  }
+
+  .lab__counts dd {
+    font-size: var(--step-3);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+
+  .lab__over dd {
+    transition: color var(--dur-base) ease;
+  }
+
+  .lab[data-oversold] .lab__over dd {
+    color: var(--warn);
+  }
+
+  .lab__grid {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .lab__grid li,
+  .lab__legend i {
+    aspect-ratio: 1;
+    border-radius: 5px;
+    border: 1px dashed var(--hairline-strong);
+    background: transparent;
+    transition:
+      background-color 260ms ease,
+      border-color 260ms ease,
+      transform 420ms var(--ease-spring);
+  }
+
+  .lab__grid li.is-wait {
+    border-style: solid;
+    border-color: var(--hairline-strong);
+  }
+
+  .lab__grid li.is-ok,
+  .lab__legend i.is-ok {
+    background: var(--ink);
+    border: 1px solid var(--ink);
+  }
+
+  .lab__grid li.is-no,
+  .lab__legend i.is-no {
+    background: var(--paper-sunken);
+    border: 1px solid var(--hairline);
+  }
+
+  .lab__grid li.is-over,
+  .lab__legend i.is-over {
+    background: var(--warn);
+    border: 1px solid var(--warn);
+  }
+
+  .lab__grid li:is(.is-ok, .is-over) {
+    transform: scale(0.86);
+  }
+
+  .lab__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin-top: var(--space-4);
+    padding: 0;
+    list-style: none;
+    font-size: var(--step--2);
+    color: var(--graphite);
+  }
+
+  .lab__legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+
+  .lab__legend i {
+    width: 10px;
+    border-radius: 3px;
+  }
+
+  .lab__result {
+    min-height: 1.6em;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .lab[data-oversold] .lab__result {
+    color: var(--warn);
+  }
+</style>

@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import PostList from '../components/PostList.astro';
+import PageIntro from '../components/PageIntro.astro';
 import { getPosts, getTags } from '../lib/posts';
 import { localePath, type Locale } from '../i18n/config';
 import { useTranslations } from '../i18n/ui';
@@ -18,25 +19,23 @@ const byYear = years.map((year) => ({ year, posts: posts.filter((p) => p.post.da
 ---
 
 <Base locale={locale} title={t.writing.title} description={t.writing.lede}>
+  <PageIntro label={`${posts.length} · ${t.writing.title}`} title={t.writing.title} lede={t.writing.lede}>
+    {
+      tags.length > 0 && (
+        <ul class="tags" aria-label={t.writing.byTag} data-reveal style="--reveal-delay:260">
+          {tags.map((tag) => (
+            <li>
+              <a href={localePath(locale, `/tags/${tag.slug}/`)}>
+                {tag.tag}
+                <span class="tags__count">{tag.posts.length}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </PageIntro>
   <div class="page">
-    <header class="intro">
-      <h1 class="intro__title">{t.writing.title}</h1>
-      <p class="intro__lede">{t.writing.lede}</p>
-      {
-        tags.length > 0 && (
-          <ul class="tags" aria-label={t.writing.byTag}>
-            {tags.map((tag) => (
-              <li>
-                <a href={localePath(locale, `/tags/${tag.slug}/`)}>
-                  {tag.tag}
-                  <span class="tags__count">{tag.posts.length}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        )
-      }
-    </header>
 
     {
       byYear.length === 0 ? (
@@ -46,7 +45,7 @@ const byYear = years.map((year) => ({ year, posts: posts.filter((p) => p.post.da
         </section>
       ) : (
         byYear.map(({ year, posts }) => (
-          <section class="rail" aria-labelledby={`y${year}`}>
+          <section class="rail" aria-labelledby={`y${year}`} data-reveal>
             <div class="rail__head">
               <h2 class="rail__title tabular" id={`y${year}`}>
                 {year}
@@ -68,7 +67,7 @@ const byYear = years.map((year) => ({ year, posts: posts.filter((p) => p.post.da
     gap: var(--space-2);
     list-style: none;
     padding: 0;
-    margin-top: var(--space-6);
+    margin-top: var(--space-3);
   }
 
   .tags a {

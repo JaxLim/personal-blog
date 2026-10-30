@@ -1,0 +1,16 @@
+---
+import CaseStudy from '../../../views/CaseStudy.astro';
+import { prefixedLocalePaths, type Locale } from '../../../i18n/config';
+import { caseStudies } from '../../../work';
+
+export function getStaticPaths() {
+  return prefixedLocalePaths().flatMap(({ params }) =>
+    caseStudies.map((study) => ({ params: { lang: params.lang, slug: study.slug }, props: { study } })),
+  );
+}
+
+const { study } = Astro.props;
+const locale = Astro.params.lang as Locale;
+---
+
+<CaseStudy locale={locale} study={study} />

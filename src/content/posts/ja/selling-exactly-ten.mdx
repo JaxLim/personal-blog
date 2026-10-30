@@ -1,0 +1,87 @@
+---
+title: ちょうど十個を売る
+description: 最後の 10 個を 40 人が同時に買おうとする。素直なコードが売り越してしまう理由と、決して売り越さない SQL 一文について。
+date: 2026-10-30
+tags: [Java, MySQL, Concurrency]
+pinned: true
+project: orderpilot
+---
+
+在庫を扱うシステムは、いつか必ず同じ午後を迎えます。残り 10 個の商品があり、メールマガジンが配信され、40 人が同じ一秒のうちに「購入」を押す。問われるのは、一件の注文を正しく処理できるかではありません。四十件を同時に正しく処理できるかです。
+
+[OrderPilot](/ja/projects/orderpilot/) には、まさにその午後を再現するテストがあります。コンテナ上の本物の MySQL に対して 40 本のスレッドを走らせ、在庫 10 個の同じ商品をそれぞれ一つずつ買わせて、最後に注文がちょうど 10 件であることを確かめます。この記事は、そのテストを通している一行についての話です。
+
+## 誰もが最初に書くコード
+
+在庫チェックの最初の版は、自然に書けてしまいます。
+
+```java
+int available = jdbc.queryForObject(
+    "SELECT available FROM inventory WHERE sku = ?", Integer.class, sku);
+if (available >= qty) { // [!code highlight]
+    jdbc.update("UPDATE inventory SET available = ? WHERE sku = ?", available - qty, sku);
+    createOrder(sku, qty);
+}
+```
+
+一つひとつのリクエストは正しく動きます。問題は `SELECT` と `UPDATE` のあいだの隙間です。二つのリクエストが同じ数字を読み、どちらも在庫が足りると判断し、どちらも同じ結果を書き戻すことがあります。
+
+<Figure caption="購入者は二人、在庫は一つ。二人とも 1 を読み、チェックを通り、0 を書き込む。注文は二件になり、一つの在庫が二度売れる。" wide>
+  <svg viewBox="0 0 720 210" role="img" aria-label="二人の購入者が同じ在庫数を読むタイムライン">
+    <g style="font: 12px var(--font-sans); fill: var(--graphite)">
+      <text x="16" y="62">購入者 A</text>
+      <text x="16" y="142">購入者 B</text>
+    </g>
+    <line x1="96" y1="58" x2="700" y2="58" style="stroke: var(--hairline-strong)" />
+    <line x1="96" y1="138" x2="700" y2="138" style="stroke: var(--hairline-strong)" />
+    <g style="font: 600 12px var(--font-mono)">
+      <rect x="120" y="40" width="130" height="36" rx="8" style="fill: var(--paper-raised); stroke: var(--ink)" />
+      <text x="185" y="63" text-anchor="middle" style="fill: var(--ink)">読む → 1</text>
+      <rect x="200" y="120" width="130" height="36" rx="8" style="fill: var(--paper-raised); stroke: var(--ink)" />
+      <text x="265" y="143" text-anchor="middle" style="fill: var(--ink)">読む → 1</text>
+      <rect x="400" y="40" width="130" height="36" rx="8" style="fill: var(--paper-raised); stroke: var(--accent)" />
+      <text x="465" y="63" text-anchor="middle" style="fill: var(--accent)">0 を書く · 注文</text>
+      <rect x="520" y="120" width="160" height="36" rx="8" style="fill: var(--warn-wash); stroke: var(--warn)" />
+      <text x="600" y="143" text-anchor="middle" style="fill: var(--warn)">0 を書く · また注文</text>
+    </g>
+    <text x="96" y="196" style="font: 11px var(--font-mono); fill: var(--graphite-soft)">時間 →</text>
+  </svg>
+</Figure>
+
+二人なら一つ売りすぎるだけです。四十人になると競合が積み重なります。書き込みはどれも、すでに古くなっているかもしれない数字に基づくので、遅いリクエストが古い値を書き戻すと、在庫が*増える*ことさえあります。[ケーススタディのインタラクティブな実験](/ja/projects/orderpilot/#demo)はまさにこの処理を実行していて、たいてい存在しない在庫を二、三十個売ってしまいます。
+
+## 確認はデータベースに任せる
+
+直し方は、データベースに質問してからその答えに基づいて動くのをやめることです。両方を一度にやってもらいます。
+
+```java title="InventoryService.java"
+int rows = jdbc.update("""
+    UPDATE inventory
+       SET available = available - ?
+     WHERE sku = ? AND available >= ?""", qty, sku, qty); // [!code highlight]
+if (rows == 0) throw new InsufficientStock(sku);
+```
+
+InnoDB は `UPDATE` の対象行をロックし、`WHERE` を最新のコミット済みの値で評価します。だから確認と減算が切り離されることはありません。在庫が尽きると条件に一致しなくなり、変更は 0 行になって、コードは自分が負けたとわかります。ほかのリクエストが割り込む隙間はありません。
+
+<Callout type="tip" title="影響行数が答え">
+文が変更した行数が、結果のすべてです。1 なら在庫を確保でき、0 ならできなかった。二度目のクエリは不要で、競合の余地もありません。
+</Callout>
+
+## 保証を本物にする細部
+
+一文で解決できるのは、一つの商品の場合です。実際の注文には複数の行があり、それでも保証を守るためにいくつかの工夫をしています。
+
+**注文全体を一つのトランザクションに。**各行の `UPDATE`、注文の行、そのアウトボックスのイベントをまとめてコミットします。三行目で在庫が足りなければ、例外が一行目と二行目もロールバックするので、存在しない注文のために在庫を押さえたままになることはありません。
+
+**ロックの順番を固定する。**複数行の注文が二つ、同じ商品を逆の順番で扱うと、デッドロックが起こりえます。互いに一行ずつ握ったまま、相手の行を待つからです。引き当ての前に行を商品 ID で並べ替えれば、どのトランザクションも同じ順番でロックを求めるので、循環は生まれません。
+
+**最後の防衛線としての制約。**テーブルには `CHECK (available >= 0)` があります。[^1] 将来の変更がうっかり条件付き更新を迂回しても、データベースはこっそりマイナスになる代わりに、書き込みを拒否します。
+
+## 選ばなかった方法
+
+よくある代替案には、それぞれこの方法にはないコストがあります。`SELECT … FOR UPDATE` のあとに更新する方法は、同じロックを取りながら往復が二回になります。バージョン列による楽観的なリトライは、人気商品をリトライの嵐に変えてしまいます。Redis と Lua による事前減算はさらに大きな規模に耐えますが、正のデータが二つになり、その照合が必要です。元が取れるのはフラッシュセール級の流量からです。
+
+店にとって、条件付きの `UPDATE` は、いちばん単純で、しかも正しさを証明できるという珍しい解決策です。それを証明するテストも短く済みます。40 本のスレッド、10 個の在庫、そして注文がちょうど 10 件であるという一つのアサーションです。
+
+[^1]: MySQL が `CHECK` 制約を実際に適用するのはバージョン 8.0.16 からです。それより前のバージョンは構文を受け付けても、黙って無視します。

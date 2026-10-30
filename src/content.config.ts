@@ -19,6 +19,8 @@ const posts = defineCollection({
     draft: z.boolean().default(false),
     /** Pinned posts appear first on the home page. */
     pinned: z.boolean().default(false),
+    /** Slug of a case study this post belongs to (src/work/), linked at the end. */
+    project: z.string().optional(),
   }),
 });
 
