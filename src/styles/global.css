@@ -1,0 +1,379 @@
+@import './tokens.css';
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + var(--space-5));
+  background: var(--paper);
+}
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--step-0);
+  line-height: var(--leading-body);
+  letter-spacing: var(--track-body);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* CJK: tidy punctuation spacing, keep words whole, space Latin from CJK */
+:lang(zh),
+:lang(ja) {
+  line-break: strict;
+  text-spacing-trim: trim-start;
+  text-autospace: normal;
+}
+
+:lang(ja) :is(h1, h2, h3, h4, p, li, dd) {
+  word-break: auto-phrase;
+}
+
+:lang(zh) :is(h1, h2, h3, h4),
+:lang(ja) :is(h1, h2, h3, h4) {
+  font-feature-settings: 'palt';
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  text-wrap: balance;
+  letter-spacing: var(--track-heading);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: var(--selection);
+  color: var(--ink);
+}
+
+/* ---------- Links and focus ---------- */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Inline links: the underline thickens from a hairline on hover */
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.24em;
+  transition:
+    text-decoration-color var(--dur-fast) ease,
+    text-underline-offset var(--dur-base) var(--ease-out);
+}
+
+.link:hover {
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.18em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: -100px;
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-s);
+  font-size: var(--step--1);
+  font-weight: 500;
+}
+
+.skip-link:focus {
+  top: var(--space-3);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.4em;
+  height: 1.4em;
+  padding: 0 0.35em;
+  border: 1px solid var(--hairline-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-s);
+  font-family: var(--font-sans);
+  font-size: 0.75em;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--graphite);
+  background: var(--paper-raised);
+  letter-spacing: 0;
+}
+
+/* ---------- Layout ---------- */
+.page {
+  width: 100%;
+  max-width: calc(var(--page-max) + var(--gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+main {
+  flex: 1;
+}
+
+/*
+ * The rail layout: a narrow left column names the section, the wide right
+ * column holds its content. Used across the site, like a technical manual.
+ */
+.rail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  padding-block: var(--space-7);
+  border-top: 1px solid var(--hairline);
+}
+
+@media (min-width: 52rem) {
+  .rail {
+    grid-template-columns: minmax(12rem, 3fr) minmax(0, 9fr);
+    gap: var(--space-6);
+    padding-block: var(--space-8);
+  }
+}
+
+.rail__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-self: start;
+}
+
+@media (min-width: 52rem) {
+  .rail__head {
+    position: sticky;
+    top: calc(var(--header-h) + var(--space-6));
+  }
+}
+
+.rail__title {
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: var(--track-heading);
+}
+
+.rail__note {
+  color: var(--graphite);
+  font-size: var(--step--1);
+  line-height: 1.55;
+  max-width: 24ch;
+}
+
+:lang(zh) .rail__note,
+:lang(ja) .rail__note {
+  max-width: 15em;
+}
+
+.rail__more {
+  font-size: var(--step--1);
+  font-weight: 500;
+  margin-top: var(--space-2);
+  align-self: start;
+}
+
+/* Page intro used by section pages */
+.intro {
+  padding-block: var(--space-9) var(--space-7);
+}
+
+.intro__title {
+  font-size: var(--step-4);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--track-title);
+  font-weight: 650;
+}
+
+:lang(zh) .intro__title,
+:lang(ja) .intro__title {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.intro__lede {
+  margin-top: var(--space-4);
+  max-width: 38rem;
+  color: var(--graphite);
+  font-size: var(--step-1);
+  line-height: 1.5;
+}
+
+:lang(zh) .intro__lede,
+:lang(ja) .intro__lede {
+  font-size: var(--step-0);
+  line-height: 1.85;
+  max-width: 34rem;
+}
+
+/* Segmented control: sort and filter choices */
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  background: var(--paper-raised);
+}
+
+.segmented button {
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  font-size: var(--step--1);
+  color: var(--graphite);
+  transition:
+    color var(--dur-fast) ease,
+    background-color var(--dur-base) var(--ease-out);
+}
+
+.segmented button:hover {
+  color: var(--ink);
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* Toast: brief confirmation of an action, from src/scripts/ui.ts */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-6);
+  z-index: 90;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--step--1);
+  font-weight: 500;
+  box-shadow: var(--shadow-float);
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-base) ease,
+    transform var(--dur-slow) var(--ease-spring);
+}
+
+.toast[data-show] {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Numerals in tables and dates line up */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Page transitions ----------
+ * Keyframes for the main content (wired up in src/layouts/Base.astro) and
+ * the timing of shared-element morphs such as a post title moving from the
+ * list into the article header.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(*) {
+    animation-duration: 420ms;
+    animation-timing-function: var(--ease-out);
+  }
+}
+
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---------- Motion preferences ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Thin, quiet scrollbars inside scrolling panels (code, contents, search) */
+pre,
+.table-scroll,
+.search__results,
+.article__toc {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hairline-strong) transparent;
+}

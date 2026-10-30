@@ -1,0 +1,276 @@
+---
+/**
+ * The activity pulse: one tick per day for the last 13 weeks, like the trace
+ * of a seismograph. Today's tick carries the pen, which glows while the page
+ * is receiving live updates. Hover, or focus it and use the arrow keys, to
+ * read individual days. src/scripts/live.ts keeps it current.
+ */
+import { lastDays, pulseSummary, PULSE_DAYS, type GitHubData } from '../lib/github-shared';
+import { LOCALE_INFO, type Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  data: GitHubData;
+  locale: Locale;
+}
+
+const { data, locale } = Astro.props;
+const t = useTranslations(locale);
+const days = lastDays(PULSE_DAYS);
+const counts = days.map((d) => data.days[d] ?? 0);
+const max = Math.max(1, ...counts);
+const total = counts.reduce((a, b) => a + b, 0);
+const height = (n: number) => (n ? 0.1 + 0.9 * Math.sqrt(n / max) : 0);
+const noData = (d: string) => Boolean(data.coverageFrom && d < data.coverageFrom);
+const summary = pulseSummary(total, data.coverageFrom, locale);
+
+const monthFmt = new Intl.DateTimeFormat(LOCALE_INFO[locale].intl, { month: 'short' });
+const months = days
+  .map((d, i) => ({ i, date: new Date(d + 'T12:00:00') }))
+  .filter(({ date, i }) => date.getDate() === 1 && i < PULSE_DAYS - 8)
+  .map(({ date, i }) => ({ label: monthFmt.format(date), col: i + 1 }));
+---
+
+<figure class="pulse" data-pulse data-live={data.sample ? undefined : ''}>
+  <div
+    class="pulse__plot"
+    data-pulse-plot
+    tabindex="0"
+    role="img"
+    aria-label={summary}
+    aria-describedby="pulse-hint"
+  >
+    {
+      days.map((d, i) => (
+        <span
+          class:list={['tick', { 'tick--idle': !counts[i], 'tick--nodata': noData(d), 'tick--today': i === days.length - 1 }]}
+          style={`--h:${height(counts[i]).toFixed(3)};--i:${i}`}
+          data-date={d}
+          data-count={counts[i]}
+        />
+      ))
+    }
+    <span class="pulse__cursor" data-pulse-cursor aria-hidden="true"></span>
+    <div class="pulse__tip" data-pulse-tip hidden></div>
+  </div>
+  <div class="pulse__axis" aria-hidden="true">
+    {months.map((m) => <span style={`grid-column:${m.col} / span 12`}>{m.label}</span>)}
+    <span class="pulse__today" style={`grid-column:${PULSE_DAYS - 7} / span 8`}>{t.pulse.today}</span>
+  </div>
+  <figcaption class="visually-hidden" data-pulse-total>{summary}</figcaption>
+  <p class="visually-hidden" id="pulse-hint">{t.pulse.keyboard}</p>
+  <p class="visually-hidden" aria-live="polite" data-pulse-live></p>
+</figure>
+
+<style>
+  .pulse {
+    --plot-h: clamp(5.5rem, 3rem + 7vw, 9.5rem);
+    --tick-gap: clamp(1px, 0.25vw, 4px);
+    position: relative;
+  }
+
+  .pulse__plot {
+    position: relative;
+    height: var(--plot-h);
+    display: grid;
+    grid-template-columns: repeat(91, minmax(0, 1fr));
+    align-items: end;
+    column-gap: var(--tick-gap);
+    border-bottom: 1px solid var(--hairline-strong);
+    touch-action: pan-y;
+    cursor: crosshair;
+    outline-offset: 8px;
+  }
+
+  .tick {
+    display: block;
+    width: 100%;
+    max-width: 4px;
+    justify-self: center;
+    height: calc(var(--h) * 100%);
+    min-height: 3px;
+    background: var(--tick);
+    border-radius: 1px 1px 0 0;
+    transform-origin: bottom;
+    transition:
+      height 600ms var(--ease-out),
+      background-color var(--dur-fast) ease,
+      opacity var(--dur-base) ease;
+  }
+
+  .tick--idle {
+    background: var(--tick-idle);
+  }
+
+  /* Before the available history begins: no claim either way */
+  .tick--nodata {
+    background: none;
+    min-height: 0;
+    height: 0 !important;
+  }
+
+  .tick--today,
+  .tick[data-active] {
+    background: var(--accent);
+  }
+
+  .tick--idle[data-active] {
+    background: var(--graphite);
+  }
+
+  /* While reading a day, the rest of the trace steps back */
+  .pulse__plot[data-reading] .tick:not([data-active]) {
+    opacity: 0.45;
+  }
+
+  /* A freshly counted contribution flashes once */
+  .tick[data-bumped] {
+    animation: bump 900ms var(--ease-out);
+  }
+
+  /* The pen: a dot riding on top of today's tick */
+  .tick--today {
+    position: relative;
+  }
+
+  .tick--today::before,
+  .tick--today::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .tick--today::after {
+    background: none;
+    border: 1.5px solid var(--accent);
+    opacity: 0;
+  }
+
+  .pulse[data-live] .tick--today::after {
+    animation: halo 2.8s var(--ease-out) 2s infinite;
+  }
+
+  /* Crosshair: a hairline through the day being read */
+  .pulse__cursor {
+    position: absolute;
+    top: -12px;
+    bottom: -1px;
+    left: var(--cx, 0);
+    width: 0;
+    border-left: 1px dashed var(--graphite-soft);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      left 90ms var(--ease-out),
+      opacity var(--dur-fast) ease;
+  }
+
+  .pulse__plot[data-reading] .pulse__cursor {
+    opacity: 1;
+  }
+
+  /* Tooltip */
+  .pulse__tip {
+    position: absolute;
+    bottom: calc(100% + 16px);
+    left: 0;
+    z-index: 2;
+    padding: var(--space-2) var(--space-3);
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: var(--radius-m);
+    font-size: var(--step--2);
+    line-height: 1.45;
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translateX(-50%);
+    box-shadow: var(--shadow-float);
+    transition: left 90ms var(--ease-out);
+  }
+
+  .pulse__tip:not([hidden]) {
+    animation: tip-in 160ms var(--ease-out);
+  }
+
+  .pulse__tip :global(strong) {
+    display: block;
+    font-weight: 600;
+  }
+
+  .pulse__axis {
+    display: grid;
+    grid-template-columns: repeat(91, minmax(0, 1fr));
+    column-gap: var(--tick-gap);
+    margin-top: var(--space-2);
+    font-size: var(--step--2);
+    color: var(--graphite);
+  }
+
+  .pulse__axis span {
+    grid-row: 1;
+    white-space: nowrap;
+  }
+
+  .pulse__today {
+    text-align: right;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* The one orchestrated moment: the trace draws in from left to right */
+  @media (prefers-reduced-motion: no-preference) {
+    .pulse:not([data-drawn]) .tick {
+      animation: draw 560ms var(--ease-out) both;
+      animation-delay: calc(var(--i) * 7ms + 120ms);
+    }
+
+    .pulse:not([data-drawn]) .tick--today::before {
+      animation: pen-in 420ms var(--ease-spring) 1.28s both;
+    }
+  }
+
+  @keyframes draw {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  @keyframes pen-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.4);
+    }
+  }
+
+  @keyframes tip-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 4px);
+    }
+  }
+
+  @keyframes halo {
+    0% {
+      opacity: 0.55;
+      transform: scale(0.6);
+    }
+    70%,
+    100% {
+      opacity: 0;
+      transform: scale(1.6);
+    }
+  }
+
+  @keyframes bump {
+    0% {
+      background: var(--accent);
+      transform: scaleY(1.12);
+    }
+  }
+</style>

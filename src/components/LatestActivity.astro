@@ -1,0 +1,151 @@
+---
+import { pulseSummary, type GitHubData } from '../lib/github-shared';
+import { relativeTime } from '../lib/format';
+import type { Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+import { site } from '../site.config';
+
+interface Props {
+  data: GitHubData;
+  locale: Locale;
+}
+
+const { data, locale } = Astro.props;
+const t = useTranslations(locale);
+const latest = data.events[0];
+const total = Object.values(data.days).reduce((a, b) => a + b, 0);
+---
+
+<div class="latest">
+  <p class="latest__summary" data-pulse-summary>{pulseSummary(total, data.coverageFrom, locale)}</p>
+
+  {
+    latest ? (
+      <a class="latest__event" href={latest.url} data-latest rel="noopener">
+        <span class="latest__label">
+          <span class="latest__dot" aria-hidden="true" />
+          {data.sample ? t.latest.label : t.latest.live}
+        </span>
+        <span class="latest__title" data-latest-title lang="en">
+          {latest.title}
+        </span>
+        <span class="latest__meta">
+          <span class="latest__repo" data-latest-repo translate="no">{latest.repo}</span>
+          <time datetime={latest.createdAt} data-time data-latest-time>
+            {relativeTime(latest.createdAt, locale)}
+          </time>
+        </span>
+      </a>
+    ) : (
+      <p class="latest__empty">{t.latest.empty}</p>
+    )
+  }
+</div>
+
+{data.sample && <p class="sample-note">{site.github.username ? t.latest.sampleUnreachable : t.latest.sampleNoUser}</p>}
+
+<style>
+  .latest {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-5) var(--space-7);
+    margin-top: var(--space-6);
+  }
+
+  .latest__summary {
+    color: var(--graphite);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .latest__event {
+    display: grid;
+    gap: 2px;
+    max-width: 30rem;
+    text-align: right;
+    justify-items: end;
+    margin-left: auto;
+  }
+
+  .latest__label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--step--2);
+    color: var(--graphite);
+  }
+
+  .latest__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .latest__title {
+    font-size: var(--step-0);
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+    transition: color var(--dur-fast) ease;
+  }
+
+  .latest__event:hover .latest__title {
+    color: var(--accent);
+  }
+
+  .latest__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    font-size: var(--step--1);
+    color: var(--graphite);
+  }
+
+  .latest__repo {
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  /* Fresh activity: the line enters once when it changes */
+  .latest__event[data-fresh] .latest__title {
+    animation: fresh 1.6s var(--ease-out);
+  }
+
+  @keyframes fresh {
+    0% {
+      color: var(--accent);
+      transform: translateY(4px);
+      opacity: 0;
+    }
+    30% {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .latest__empty {
+    color: var(--graphite);
+    font-size: var(--step--1);
+  }
+
+  .sample-note {
+    margin-top: var(--space-6);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-m);
+    background: var(--accent-wash);
+    color: var(--ink-soft);
+    font-size: var(--step--1);
+  }
+
+  @media (max-width: 40rem) {
+    .latest__event {
+      text-align: left;
+      justify-items: start;
+      margin-left: 0;
+    }
+  }
+</style>

@@ -1,0 +1,46 @@
+# Notes about your GitHub repositories, keyed by repository name.
+# Every field is optional. GitHub's own description is used for any
+# language you leave out.
+#
+# personal-blog:
+#   featured: true          # shown first on the home page, in file order
+#   description:
+#     zh: 这个网站本身。
+#     ja: このサイトそのもの。
+# old-experiment:
+#   hidden: true            # never listed
+
+# These entries translate the sample repositories shown before you set a
+# GitHub username. They're harmless afterwards; replace them with your own.
+personal-blog:
+  description:
+    zh: 这个网站本身。基于 Astro 和 TypeScript，并实时同步 GitHub API 的动态。
+    ja: このサイトそのもの。Astro と TypeScript で構築し、GitHub API からライブで更新されます。
+ledger-kit:
+  description:
+    zh: 面向 TypeScript 的复式记账基础库，支持精确的十进制运算。
+    ja: TypeScript 向けの複式簿記ライブラリ。正確な十進演算に対応。
+tidepool:
+  description:
+    zh: 离线优先的笔记应用，通过 CRDT 同步。
+    ja: CRDT で同期するオフラインファーストのノートアプリ。
+quill-api:
+  description:
+    zh: 用 Go 编写的小型 REST API，用于撰写和定时发布文章。
+    ja: 記事の下書きと予約投稿のための小さな REST API（Go 製）。
+shardcache:
+  description:
+    zh: 支持请求合并的一致性哈希缓存客户端。
+    ja: リクエストの合流に対応したコンシステントハッシュのキャッシュクライアント。
+type-scale:
+  description:
+    zh: 在命令行中生成模块化字号比例和 CSS 自定义属性。
+    ja: モジュラースケールの文字サイズと CSS カスタムプロパティをコマンドラインで生成。
+dotfiles:
+  description:
+    zh: Shell、编辑器和终端的配置文件。
+    ja: シェル、エディタ、ターミナルの設定。
+ml-notebooks:
+  description:
+    zh: 学习应用机器学习过程中的实验与笔记。
+    ja: 応用機械学習を学ぶ中での実験とノート。

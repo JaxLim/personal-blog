@@ -1,0 +1,62 @@
+---
+/**
+ * Use in MDX posts without importing:
+ *   <Callout>Plain note.</Callout>
+ *   <Callout type="warning" title="Before you deploy">Text.</Callout>
+ */
+import { splitLocale } from '../i18n/config';
+
+interface Props {
+  type?: 'note' | 'tip' | 'warning';
+  title?: string;
+}
+
+const { type = 'note', title } = Astro.props;
+const DEFAULTS = {
+  en: { note: 'Note', tip: 'Tip', warning: 'Warning' },
+  zh: { note: '注意', tip: '提示', warning: '警告' },
+  ja: { note: 'メモ', tip: 'ヒント', warning: '注意' },
+};
+const defaults = DEFAULTS[splitLocale(Astro.url.pathname).locale];
+---
+
+<aside class:list={['callout', `callout--${type}`]}>
+  <p class="callout__title">{title ?? defaults[type]}</p>
+  <div class="callout__body"><slot /></div>
+</aside>
+
+<style>
+  .callout {
+    --tone: var(--accent);
+    padding: var(--space-4) var(--space-5);
+    border-left: 2px solid var(--tone);
+    background: color-mix(in srgb, var(--tone) 6%, var(--paper));
+    border-radius: 0 var(--radius-s) var(--radius-s) 0;
+    font-family: var(--font-sans);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+
+  .callout--tip {
+    --tone: #1f8a5b;
+  }
+
+  .callout--warning {
+    --tone: #b4630a;
+  }
+
+  .callout__title {
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: var(--space-1);
+  }
+
+  .callout__body :global(> * + *) {
+    margin-top: var(--space-2);
+  }
+
+  .callout__body :global(code) {
+    font-size: 0.9em;
+  }
+</style>

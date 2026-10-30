@@ -1,0 +1,214 @@
+---
+import { tagSlug, type ListedPost } from '../lib/posts';
+import { formatShortDate, formatLongDate } from '../lib/format';
+import { LOCALE_INFO, localePath, type Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  posts: ListedPost[];
+  locale: Locale;
+  /** Show each post's tags under its description. */
+  showTags?: boolean;
+}
+
+const { posts, locale, showTags = false } = Astro.props;
+const t = useTranslations(locale);
+---
+
+{
+  posts.length === 0 ? (
+    <div class="empty">
+      <p>{t.posts.empty}</p>
+      {import.meta.env.DEV && <p class="empty__hint">{t.posts.emptyDev}</p>}
+    </div>
+  ) : (
+    <ol class="posts">
+      {posts.map(({ post, slug, url, fallback, locale: postLocale }) => (
+        <li class="post">
+          <a class="post__link" href={url} lang={fallback ? LOCALE_INFO[postLocale].htmlLang : undefined}>
+            <span class="post__title" transition:name={`post-${slug}`}>
+              {post.data.title}
+            </span>
+            <span class="post__desc">{post.data.description}</span>
+          </a>
+          <div class="post__aside">
+            <time class="post__date" datetime={post.data.date.toISOString()} title={formatLongDate(post.data.date, locale)}>
+              {formatShortDate(post.data.date, locale)}
+            </time>
+            {fallback && <span class="post__badge">{LOCALE_INFO[postLocale].label}</span>}
+            {post.data.draft && <span class="post__badge post__badge--draft">{t.posts.draft}</span>}
+          </div>
+          {showTags && post.data.tags.length > 0 && (
+            <ul class="post__tags" aria-label={t.article.tags}>
+              {post.data.tags.map((tag) => (
+                <li>
+                  <a href={localePath(locale, `/tags/${tagSlug(tag)}/`)}>{tag}</a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+<style>
+  .posts {
+    list-style: none;
+    padding: 0;
+    border-top: 1px solid var(--hairline-strong);
+  }
+
+  .post {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--space-6);
+    padding-block: var(--space-5);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  /* Hover: a short accent rule grows in at the row's edge */
+  .post::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--space-4) * -1);
+    top: var(--space-5);
+    bottom: var(--space-5);
+    width: 2px;
+    border-radius: 1px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform var(--dur-slow) var(--ease-out);
+  }
+
+  .post:has(.post__link:hover)::before,
+  .post:has(.post__link:focus-visible)::before {
+    transform: scaleY(1);
+  }
+
+  .post__link {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .post__title {
+    width: fit-content;
+    font-size: var(--step-1);
+    font-weight: 600;
+    letter-spacing: var(--track-heading);
+    line-height: 1.3;
+    color: var(--ink);
+    text-wrap: balance;
+    transition: color var(--dur-fast) ease;
+  }
+
+  :lang(zh) .post__title,
+  :lang(ja) .post__title {
+    font-size: 1.1875rem;
+    line-height: 1.5;
+  }
+
+  .post__link:hover .post__title {
+    color: var(--accent);
+  }
+
+  .post__desc {
+    color: var(--graphite);
+    font-size: var(--step--1);
+    line-height: 1.6;
+    max-width: 62ch;
+  }
+
+  :lang(zh) .post__desc,
+  :lang(ja) .post__desc {
+    max-width: 36em;
+    line-height: 1.8;
+  }
+
+  .post__aside {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-2);
+    padding-top: 0.3rem;
+  }
+
+  .post__date {
+    font-size: var(--step--1);
+    color: var(--graphite);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .post__badge {
+    padding: 0 var(--space-2);
+    font-size: var(--step--2);
+    font-weight: 500;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--hairline-strong);
+    color: var(--graphite);
+    white-space: nowrap;
+  }
+
+  .post__badge--draft {
+    border-color: transparent;
+    background: var(--accent-wash);
+    color: var(--accent);
+  }
+
+  .post__tags {
+    grid-column: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-3);
+    font-size: var(--step--2);
+  }
+
+  .post__tags a {
+    color: var(--graphite);
+    transition: color var(--dur-fast) ease;
+  }
+
+  .post__tags a:hover {
+    color: var(--accent);
+  }
+
+  .empty {
+    color: var(--graphite);
+  }
+
+  .empty__hint {
+    margin-top: var(--space-2);
+    font-size: var(--step--1);
+  }
+
+  @media (max-width: 34rem) {
+    .post {
+      grid-template-columns: 1fr;
+    }
+
+    .post::before {
+      display: none;
+    }
+
+    .post__aside {
+      grid-column: 1;
+      grid-row: 1;
+      flex-direction: row;
+      align-items: center;
+      padding: 0 0 var(--space-1);
+    }
+
+    .post__link {
+      grid-row: 2;
+    }
+  }
+</style>

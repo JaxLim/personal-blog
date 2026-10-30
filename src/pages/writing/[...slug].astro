@@ -1,0 +1,13 @@
+---
+import Article from '../../views/Article.astro';
+import { getNativePosts, type Post } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const posts = await getNativePosts('en');
+  return posts.map(({ post, slug }) => ({ params: { slug }, props: { post } }));
+}
+
+const { post } = Astro.props as { post: Post };
+---
+
+<Article post={post} />

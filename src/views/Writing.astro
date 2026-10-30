@@ -1,0 +1,97 @@
+---
+import Base from '../layouts/Base.astro';
+import PostList from '../components/PostList.astro';
+import { getPosts, getTags } from '../lib/posts';
+import { localePath, type Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const [posts, tags] = await Promise.all([getPosts(locale), getTags(locale)]);
+
+const years = [...new Set(posts.map((p) => p.post.data.date.getUTCFullYear()))];
+const byYear = years.map((year) => ({ year, posts: posts.filter((p) => p.post.data.date.getUTCFullYear() === year) }));
+---
+
+<Base locale={locale} title={t.writing.title} description={t.writing.lede}>
+  <div class="page">
+    <header class="intro">
+      <h1 class="intro__title">{t.writing.title}</h1>
+      <p class="intro__lede">{t.writing.lede}</p>
+      {
+        tags.length > 0 && (
+          <ul class="tags" aria-label={t.writing.byTag}>
+            {tags.map((tag) => (
+              <li>
+                <a href={localePath(locale, `/tags/${tag.slug}/`)}>
+                  {tag.tag}
+                  <span class="tags__count">{tag.posts.length}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </header>
+
+    {
+      byYear.length === 0 ? (
+        <section class="rail">
+          <div class="rail__head" />
+          <PostList posts={[]} locale={locale} />
+        </section>
+      ) : (
+        byYear.map(({ year, posts }) => (
+          <section class="rail" aria-labelledby={`y${year}`}>
+            <div class="rail__head">
+              <h2 class="rail__title tabular" id={`y${year}`}>
+                {year}
+              </h2>
+              <p class="rail__note">{t.posts.count(posts.length)}</p>
+            </div>
+            <PostList posts={posts} locale={locale} showTags />
+          </section>
+        ))
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-6);
+  }
+
+  .tags a {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px;
+    font-size: var(--step--1);
+    color: var(--graphite);
+    transition:
+      color var(--dur-fast) ease,
+      border-color var(--dur-fast) ease;
+  }
+
+  .tags a:hover {
+    color: var(--ink);
+    border-color: var(--graphite);
+  }
+
+  .tags__count {
+    margin-left: 0.45em;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+  }
+</style>

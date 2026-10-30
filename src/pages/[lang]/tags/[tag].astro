@@ -1,0 +1,18 @@
+---
+import TagView from '../../../views/Tag.astro';
+import { LOCALES, DEFAULT_LOCALE, type Locale } from '../../../i18n/config';
+import { getTags, type Tag } from '../../../lib/posts';
+
+export async function getStaticPaths() {
+  const locales = LOCALES.filter((l) => l !== DEFAULT_LOCALE);
+  const perLocale = await Promise.all(
+    locales.map(async (lang) => (await getTags(lang)).map((tag) => ({ params: { lang, tag: tag.slug }, props: { tag } }))),
+  );
+  return perLocale.flat();
+}
+
+const { tag } = Astro.props as { tag: Tag };
+const locale = Astro.params.lang as Locale;
+---
+
+<TagView locale={locale} tag={tag} />

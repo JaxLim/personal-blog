@@ -1,0 +1,19 @@
+---
+import Article from '../../../views/Article.astro';
+import { LOCALES, DEFAULT_LOCALE } from '../../../i18n/config';
+import { getNativePosts, type Post } from '../../../lib/posts';
+
+export async function getStaticPaths() {
+  const locales = LOCALES.filter((l) => l !== DEFAULT_LOCALE);
+  const perLocale = await Promise.all(
+    locales.map(async (lang) =>
+      (await getNativePosts(lang)).map(({ post, slug }) => ({ params: { lang, slug }, props: { post } })),
+    ),
+  );
+  return perLocale.flat();
+}
+
+const { post } = Astro.props as { post: Post };
+---
+
+<Article post={post} />

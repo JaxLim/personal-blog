@@ -1,0 +1,78 @@
+---
+/**
+ * Cycles System → Light → Dark. The label always names the current setting.
+ */
+import type { Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const t = useTranslations(Astro.props.locale);
+const labels = JSON.stringify({
+  system: t.theme.label(t.theme.system),
+  light: t.theme.label(t.theme.light),
+  dark: t.theme.label(t.theme.dark),
+});
+---
+
+<button class="theme" type="button" data-theme-toggle data-labels={labels} aria-label={t.theme.label(t.theme.system)}>
+  <svg class="theme__icon theme__icon--system" viewBox="0 0 20 20" aria-hidden="true">
+    <circle cx="10" cy="10" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+    <path d="M10 3.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor"></path>
+  </svg>
+  <svg class="theme__icon theme__icon--light" viewBox="0 0 20 20" aria-hidden="true">
+    <circle cx="10" cy="10" r="3.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+    <path
+      d="M10 2.5v1.75M10 15.75v1.75M2.5 10h1.75M15.75 10h1.75M4.7 4.7l1.24 1.24M14.06 14.06l1.24 1.24M4.7 15.3l1.24-1.24M14.06 5.94l1.24-1.24"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"></path>
+  </svg>
+  <svg class="theme__icon theme__icon--dark" viewBox="0 0 20 20" aria-hidden="true">
+    <path
+      d="M15.9 12.6A6.5 6.5 0 0 1 7.4 4.1a6.5 6.5 0 1 0 8.5 8.5z"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linejoin="round"></path>
+  </svg>
+</button>
+
+<style>
+  .theme {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    color: var(--graphite);
+    transition:
+      color var(--dur-fast) ease,
+      background-color var(--dur-fast) ease;
+  }
+
+  .theme:hover {
+    color: var(--ink);
+    background: var(--paper-sunken);
+  }
+
+  .theme__icon {
+    grid-area: 1 / 1;
+    width: 1.125rem;
+    height: 1.125rem;
+    opacity: 0;
+    transform: rotate(-30deg) scale(0.8);
+    transition:
+      opacity var(--dur-base) ease,
+      transform var(--dur-slow) var(--ease-spring);
+  }
+
+  :global(html:not([data-theme])) .theme__icon--system,
+  :global(html[data-theme='light']) .theme__icon--light,
+  :global(html[data-theme='dark']) .theme__icon--dark {
+    opacity: 1;
+    transform: none;
+  }
+</style>

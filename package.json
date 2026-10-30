@@ -1,0 +1,31 @@
+{
+  "name": "personal-blog",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/copy-fonts.mjs",
+    "dev": "astro dev",
+    "prebuild": "node scripts/copy-fonts.mjs",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "new": "node scripts/new-post.mjs",
+    "icons": "node scripts/make-icons.mjs"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "latest",
+    "@astrojs/rss": "latest",
+    "@astrojs/sitemap": "latest",
+    "@fontsource-variable/jetbrains-mono": "latest",
+    "@fontsource-variable/newsreader": "latest",
+    "@fontsource-variable/noto-serif-jp": "^5.3.1",
+    "@fontsource-variable/noto-serif-sc": "^5.3.1",
+    "@fontsource-variable/schibsted-grotesk": "latest",
+    "astro": "latest"
+  },
+  "devDependencies": {
+    "@astrojs/check": "latest",
+    "typescript": "^5.9.0"
+  }
+}

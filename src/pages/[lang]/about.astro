@@ -1,0 +1,9 @@
+---
+import About from '../../views/About.astro';
+import { prefixedLocalePaths, type Locale } from '../../i18n/config';
+
+export const getStaticPaths = prefixedLocalePaths;
+const locale = Astro.params.lang as Locale;
+---
+
+<About locale={locale} />

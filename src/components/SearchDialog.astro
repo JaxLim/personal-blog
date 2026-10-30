@@ -1,0 +1,244 @@
+---
+/**
+ * Command palette: Ctrl/⌘ K or "/" opens it. Searches posts, pages and
+ * repositories in the current language. The index (/search/<lang>.json)
+ * loads the first time the palette opens. Behaviour: src/scripts/search.ts.
+ */
+import type { Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const strings = JSON.stringify({
+  empty: t.search.empty('%s'),
+  loading: t.search.loading,
+  error: t.search.error,
+  groups: t.search.groups,
+});
+---
+
+<dialog class="search" aria-labelledby="search-title" data-search data-index={`/search/${locale}.json`} data-strings={strings}>
+  <div class="search__panel">
+    <h2 class="visually-hidden" id="search-title">{t.search.title}</h2>
+    <div class="search__field">
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.4"></circle>
+        <path d="M10.5 10.5l3.25 3.25" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+      </svg>
+      <input
+        type="search"
+        placeholder={t.search.placeholder}
+        autocomplete="off"
+        spellcheck="false"
+        role="combobox"
+        aria-expanded="true"
+        aria-controls="search-results"
+        aria-autocomplete="list"
+        data-search-input
+      />
+      <button class="search__close" type="button" data-search-close>
+        <kbd>Esc</kbd><span class="visually-hidden">{t.search.close}</span>
+      </button>
+    </div>
+    <div class="search__results" id="search-results" role="listbox" aria-label={t.search.title} data-search-results></div>
+    <p class="search__status" role="status" aria-live="polite" data-search-status></p>
+    <footer class="search__footer" aria-hidden="true">
+      <span><kbd>↑</kbd><kbd>↓</kbd> {t.search.navigate}</span>
+      <span><kbd>↵</kbd> {t.search.open}</span>
+      <span><kbd>Esc</kbd> {t.search.close}</span>
+    </footer>
+  </div>
+</dialog>
+
+<style>
+  .search {
+    width: min(40rem, calc(100vw - 2rem));
+    max-height: min(32rem, calc(100dvh - 6rem));
+    margin: 12vh auto auto;
+    padding: 0;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-l);
+    background: var(--paper-raised);
+    color: var(--ink);
+    box-shadow: var(--shadow-dialog);
+    overflow: hidden;
+  }
+
+  .search::backdrop {
+    background: var(--scrim);
+    backdrop-filter: blur(3px);
+  }
+
+  .search[open] {
+    animation: dialog-in 220ms var(--ease-out);
+  }
+
+  .search[open]::backdrop {
+    animation: fade-in 220ms ease;
+  }
+
+  .search__panel {
+    display: flex;
+    flex-direction: column;
+    max-height: inherit;
+  }
+
+  .search__field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .search__field svg {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    color: var(--graphite);
+  }
+
+  .search__field input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: none;
+    font-size: var(--step-0);
+    color: var(--ink);
+  }
+
+  .search__field input::placeholder {
+    color: var(--graphite-soft);
+  }
+
+  .search__field input::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  .search__close kbd {
+    cursor: pointer;
+  }
+
+  .search__results {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-2);
+  }
+
+  .search__results:empty {
+    display: none;
+  }
+
+  .search__results :global(.search__group) {
+    padding: var(--space-3) var(--space-3) var(--space-1);
+    font-size: var(--step--2);
+    font-weight: 500;
+    color: var(--graphite);
+  }
+
+  .search__results :global([role='option']) {
+    display: grid;
+    gap: 2px;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-m);
+    cursor: pointer;
+    scroll-margin: var(--space-2);
+  }
+
+  .search__results :global([role='option'][aria-selected='true']) {
+    background: var(--paper-sunken);
+  }
+
+  .search__results :global(.search__title) {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .search__results :global([aria-selected='true'] .search__title) {
+    color: var(--accent);
+  }
+
+  .search__results :global(.search__badge) {
+    font-size: var(--step--2);
+    font-weight: 500;
+    color: var(--graphite);
+  }
+
+  .search__results :global(.search__text) {
+    font-size: var(--step--2);
+    color: var(--graphite);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .search__results :global(mark) {
+    background: none;
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+
+  .search__status {
+    padding: var(--space-5);
+    font-size: var(--step--1);
+    color: var(--graphite);
+    text-align: center;
+  }
+
+  .search__status:empty {
+    display: none;
+  }
+
+  .search__footer {
+    display: flex;
+    gap: var(--space-5);
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--hairline);
+    font-size: var(--step--2);
+    color: var(--graphite);
+  }
+
+  .search__footer span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+  }
+
+  @media (max-width: 40rem) {
+    .search {
+      margin-top: var(--space-4);
+    }
+
+    .search__footer {
+      display: none;
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.985);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+</style>

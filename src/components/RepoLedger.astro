@@ -1,0 +1,345 @@
+---
+/**
+ * Repositories as a ledger: one row each, columns aligned like a docs table.
+ * src/scripts/live.ts updates push times and stars, re-orders rows when a
+ * repository receives new commits, and runs the sort and filter controls.
+ */
+import { LANGUAGE_COLORS, repoDescription, type Repo } from '../lib/github-shared';
+import { compactNumber, relativeTime } from '../lib/format';
+import type { Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  repos: Repo[];
+  locale: Locale;
+  /** Show the sort and language controls (Projects page). */
+  controls?: boolean;
+}
+
+const { repos, locale, controls = false } = Astro.props;
+const t = useTranslations(locale);
+const languages = [...new Set(repos.map((r) => r.language).filter((l): l is string => Boolean(l)))];
+const color = (lang: string) => LANGUAGE_COLORS[lang] ?? 'var(--graphite)';
+---
+
+{
+  controls && repos.length > 1 && (
+    <div class="controls">
+      {languages.length > 1 && (
+        <div class="filter" role="group" aria-label={t.projects.filter} data-repo-filter>
+          <button type="button" aria-pressed="true" data-lang="">
+            {t.projects.all} <span class="filter__count">{repos.length}</span>
+          </button>
+          {languages.map((lang) => (
+            <button type="button" aria-pressed="false" data-lang={lang}>
+              <span class="lang-dot" style={`--c:${color(lang)}`} aria-hidden="true" />
+              {lang} <span class="filter__count">{repos.filter((r) => r.language === lang).length}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div class="segmented" role="group" aria-label={t.projects.sort} data-repo-sort>
+        <button type="button" aria-pressed="true" data-sort="recent">
+          {t.projects.sortRecent}
+        </button>
+        <button type="button" aria-pressed="false" data-sort="stars">
+          {t.projects.sortStars}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+{
+  repos.length === 0 ? (
+    <p class="ledger-empty">{t.ledger.empty}</p>
+  ) : (
+    <table class="ledger" data-ledger>
+      <thead>
+        <tr>
+          <th scope="col">{t.ledger.repository}</th>
+          <th scope="col">{t.ledger.language}</th>
+          <th scope="col" class="num">{t.ledger.stars}</th>
+          <th scope="col" class="num">{t.ledger.lastPush}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {repos.map((r) => {
+          const description = repoDescription(r, locale);
+          return (
+            <tr data-repo={r.name} data-lang={r.language ?? ''} data-pushed={r.pushedAt} data-stars-count={r.stars}>
+              <td class="ledger__main">
+                <a class="ledger__name" href={r.url} rel="noopener" translate="no">
+                  {r.name}
+                  {r.featured && <span class="ledger__featured">{t.ledger.featured}</span>}
+                </a>
+                {description && (
+                  <p class="ledger__desc" lang={r.descriptions?.[locale] ? undefined : 'en'}>
+                    {description}
+                  </p>
+                )}
+              </td>
+              <td class="ledger__lang">
+                {r.language && (
+                  <>
+                    <span class="lang-dot" style={`--c:${color(r.language)}`} aria-hidden="true" />
+                    {r.language}
+                  </>
+                )}
+              </td>
+              <td class="num ledger__stars">
+                <span data-stars>{compactNumber(r.stars, locale)}</span>
+                <span class="ledger__unit"> {t.ledger.unit(r.stars)}</span>
+              </td>
+              <td class="num ledger__time">
+                <time datetime={r.pushedAt} data-time>
+                  {relativeTime(r.pushedAt, locale)}
+                </time>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  )
+}
+
+<style>
+  .ledger {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .ledger th {
+    text-align: left;
+    font-size: var(--step--2);
+    font-weight: 500;
+    color: var(--graphite);
+    padding: 0 var(--space-5) var(--space-3) 0;
+    border-bottom: 1px solid var(--hairline-strong);
+    white-space: nowrap;
+  }
+
+  .ledger td {
+    padding: var(--space-4) var(--space-5) var(--space-4) 0;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: baseline;
+    font-size: var(--step--1);
+    color: var(--graphite);
+    white-space: nowrap;
+    transition: background-color var(--dur-base) ease;
+  }
+
+  .ledger th:last-child,
+  .ledger td:last-child {
+    padding-right: 0;
+  }
+
+  /* Hovering a row brings its name forward and lifts the description */
+  .ledger tbody tr:hover .ledger__name {
+    color: var(--accent);
+  }
+
+  .ledger tbody tr:hover .ledger__desc {
+    color: var(--ink-soft);
+  }
+
+  /* Tabular figures only on numbers: in this face they also widen commas and periods */
+  .num {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ledger .ledger__main {
+    white-space: normal;
+    width: 100%;
+  }
+
+  .ledger__name {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    font-size: var(--step-0);
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    transition: color var(--dur-fast) ease;
+  }
+
+  /* The whole row is the link's hit area */
+  .ledger tbody tr {
+    position: relative;
+  }
+
+  .ledger__name::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .ledger__featured {
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    border: 1px solid var(--hairline-strong);
+    font-size: var(--step--2);
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--graphite);
+  }
+
+  .ledger__desc {
+    margin-top: 2px;
+    max-width: 56ch;
+    line-height: 1.55;
+    transition: color var(--dur-fast) ease;
+  }
+
+  :lang(zh) .ledger__desc:not([lang]),
+  :lang(ja) .ledger__desc:not([lang]) {
+    max-width: 32em;
+  }
+
+  .ledger .ledger__time {
+    min-width: 8.5rem;
+  }
+
+  /* The column header names the unit on wide screens; stacked rows spell it out */
+  .ledger__unit {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .lang-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 0.45em;
+    border-radius: 2px;
+    background: var(--c);
+    transform: translateY(-1px);
+  }
+
+  /* Live update: the row that just changed is marked for a moment */
+  .ledger tr[data-fresh] td {
+    animation: row-fresh 2.4s var(--ease-out);
+  }
+
+  @keyframes row-fresh {
+    0% {
+      background: var(--accent-wash);
+    }
+  }
+
+  .ledger tr[hidden] {
+    display: none;
+  }
+
+  .ledger-empty {
+    color: var(--graphite);
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+
+  .filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .filter button {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px;
+    font-size: var(--step--1);
+    color: var(--graphite);
+    transition:
+      color var(--dur-fast) ease,
+      border-color var(--dur-fast) ease,
+      background-color var(--dur-fast) ease;
+  }
+
+  .filter button:hover {
+    color: var(--ink);
+    border-color: var(--graphite);
+  }
+
+  .filter button[aria-pressed='true'] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  .filter__count {
+    margin-left: 0.4em;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Narrow screens: each row becomes a small stacked entry */
+  @media (max-width: 40rem) {
+    .ledger thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    .ledger,
+    .ledger tbody {
+      display: block;
+    }
+
+    .ledger tr {
+      display: grid;
+      grid-template-columns: auto auto 1fr;
+      column-gap: var(--space-4);
+      padding-block: var(--space-4);
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    .ledger tr:first-child {
+      border-top: 1px solid var(--hairline-strong);
+    }
+
+    .ledger td {
+      padding: 0;
+      border: 0;
+    }
+
+    .ledger .ledger__main {
+      grid-column: 1 / -1;
+      margin-bottom: var(--space-2);
+    }
+
+    .ledger .ledger__time {
+      min-width: 0;
+    }
+
+    .ledger__unit {
+      position: static;
+      width: auto;
+      height: auto;
+      overflow: visible;
+      clip: auto;
+    }
+
+    .ledger tr[data-fresh] td {
+      animation: none;
+    }
+  }
+</style>

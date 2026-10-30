@@ -1,0 +1,109 @@
+---
+title: Writing and managing posts on this site
+description: Where posts live, what goes in the frontmatter, how drafts work, and every formatting element the article layout supports.
+date: 2026-10-27
+tags: [Writing, Astro]
+---
+
+Every post on this site is a single Markdown or MDX file in `src/content/posts`, inside a folder for its language. The file name becomes the address: `en/writing-posts-on-this-site.mdx` is published at `/writing/writing-posts-on-this-site/`.
+
+This post doubles as a reference for the article layout, so it uses every element the design supports.
+
+## Starting a new post
+
+Run the `new` script with a title. It creates the file, fills in today's date, and marks the post as a draft.
+
+```sh
+npm run new "Notes on edge caching"
+```
+
+Drafts show up when you run `npm run dev`, with a label, and are left out of production builds, the RSS feed and the sitemap. When the post is ready, delete the `draft` line or set it to `false`.
+
+## Writing in several languages
+
+The site is available in English, Simplified Chinese and Japanese. Each language has its own folder, and a translation is simply a file with the **same name** in another folder:
+
+```
+src/content/posts/en/edge-caching.mdx   →  /writing/edge-caching/
+src/content/posts/zh/edge-caching.mdx   →  /zh/writing/edge-caching/
+src/content/posts/ja/edge-caching.mdx   →  /ja/writing/edge-caching/
+```
+
+To start a translation, pass the language and the shared file name:
+
+```sh
+npm run new "边缘缓存笔记" -- --lang zh --slug edge-caching
+```
+
+Translations link to each other automatically: the article shows the other languages it's available in, the language menu opens the matching version, and search engines get `hreflang` links. A post that hasn't been translated still appears in every language's archive, labelled with the language it's written in. This post is one of them: it exists only in English.
+
+## Frontmatter
+
+Each post starts with a block of metadata. The build checks it against a schema, so a typo in a field name fails loudly instead of quietly hiding a post.
+
+```yaml
+---
+title: Notes on edge caching
+description: One or two sentences for the archive and link previews.
+date: 2026-11-02
+updated: 2026-11-10   # optional
+tags: [Infrastructure, Caching]
+draft: true           # optional, hidden in production
+pinned: false         # optional, shows first on the home page
+---
+```
+
+| Field | Required | What it does |
+| --- | --- | --- |
+| `title` | Yes | The headline, page title and feed title |
+| `description` | Yes | The lede under the title, the archive summary and the link preview text |
+| `date` | Yes | Publication date, used for ordering |
+| `updated` | No | Shown beside the publication date when present |
+| `tags` | No | Each tag gets its own archive page |
+| `draft` | No | Hides the post in production |
+| `pinned` | No | Keeps the post at the top of the home page |
+
+## Text
+
+Body text is set in Newsreader, a serif designed for reading on screens. Use **bold** for the one phrase a skimming reader must not miss, and *italics* for emphasis or titles. Links look [like this](https://docs.astro.build), and inline code like `npm run build`.
+
+> Quotations are set in italics with a rule on the left. Keep them short enough to read in one breath.
+
+Lists work as you'd expect:
+
+- Unordered lists for things without an order
+- Ordered lists for steps
+  - Nested items are indented
+
+1. Write the draft
+2. Read it aloud
+3. Cut a fifth of it
+
+## Code
+
+Code blocks are highlighted at build time, in colours that follow the reader's light or dark preference. Each block gets a copy button.
+
+```ts
+export function readingMinutes(body: string): number {
+  const words = body.split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 230));
+}
+```
+
+### Callouts
+
+MDX posts can use the `Callout` component without importing it.
+
+<Callout>
+A plain note, for context the reader might want but doesn't need.
+</Callout>
+
+<Callout type="warning" title="Before you publish">
+Check that the `description` reads well on its own. It's what people see in search results and link previews.
+</Callout>
+
+## Footnotes
+
+Footnotes use the standard Markdown syntax[^1] and collect at the end of the post.
+
+[^1]: Write `[^1]` in the text, and `[^1]: The note.` anywhere below it.

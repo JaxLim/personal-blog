@@ -1,0 +1,368 @@
+---
+import { render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Toc from '../components/Toc.astro';
+import Callout from '../components/Callout.astro';
+import '../styles/prose.css';
+import { getPosts, getTranslations, parsePostId, postUrl, readingMinutes, tagSlug, type Post } from '../lib/posts';
+import { formatLongDate } from '../lib/format';
+import { LOCALES, LOCALE_INFO, localePath, type Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+import { site } from '../site.config';
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const { locale, slug } = parsePostId(post.id);
+const t = useTranslations(locale);
+const { Content, headings } = await render(post);
+const minutes = readingMinutes(post.body);
+const { title, description, date, updated, tags, draft } = post.data;
+
+const translations = await getTranslations(slug);
+const alternates = Object.fromEntries(
+  LOCALES.filter((l) => translations[l]).map((l) => [l, postUrl(translations[l]!)]),
+) as Partial<Record<Locale, string>>;
+const others = LOCALES.filter((l) => l !== locale && translations[l]);
+
+const listing = await getPosts(locale);
+const index = listing.findIndex((p) => p.slug === slug);
+const newer = index > 0 ? listing[index - 1] : undefined;
+const older = index >= 0 ? listing[index + 1] : undefined;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  description,
+  datePublished: date.toISOString(),
+  ...(updated ? { dateModified: updated.toISOString() } : {}),
+  inLanguage: LOCALE_INFO[locale].htmlLang,
+  author: { '@type': 'Person', name: site.name, url: new URL(localePath(locale, '/'), Astro.site).href },
+  mainEntityOfPage: new URL(postUrl(post), Astro.site).href,
+  keywords: tags.join(', '),
+};
+---
+
+<Base locale={locale} title={title} description={description} type="article" publishedAt={date} alternates={alternates} jsonLd={jsonLd}>
+  <article class="page article">
+    <header class="article__head">
+      <a class="article__back link" href={localePath(locale, '/writing/')}>{t.nav.writing}</a>
+      <h1 class="article__title" transition:name={`post-${slug}`}>{title}</h1>
+      <p class="article__lede">{description}</p>
+    </header>
+
+    <aside class="article__meta" aria-label={t.article.about}>
+      <dl>
+        <div>
+          <dt>{t.article.published}</dt>
+          <dd><time datetime={date.toISOString()}>{formatLongDate(date, locale)}</time></dd>
+        </div>
+        {
+          updated && (
+            <div>
+              <dt>{t.article.updated}</dt>
+              <dd>
+                <time datetime={updated.toISOString()}>{formatLongDate(updated, locale)}</time>
+              </dd>
+            </div>
+          )
+        }
+        <div>
+          <dt>{t.article.readingTime}</dt>
+          <dd>{t.article.minutes(minutes)}</dd>
+        </div>
+        {
+          tags.length > 0 && (
+            <div>
+              <dt>{t.article.tags}</dt>
+              <dd>
+                <ul class="article__list">
+                  {tags.map((tag) => (
+                    <li>
+                      <a href={localePath(locale, `/tags/${tagSlug(tag)}/`)}>{tag}</a>
+                    </li>
+                  ))}
+                </ul>
+              </dd>
+            </div>
+          )
+        }
+        {
+          others.length > 0 && (
+            <div>
+              <dt>{t.article.translations}</dt>
+              <dd>
+                <ul class="article__list">
+                  {others.map((l) => (
+                    <li>
+                      <a href={alternates[l]} hreflang={LOCALE_INFO[l].htmlLang} lang={LOCALE_INFO[l].htmlLang} data-lang-option={l}>
+                        {LOCALE_INFO[l].label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </dd>
+            </div>
+          )
+        }
+        {
+          draft && (
+            <div>
+              <dt>{t.article.status}</dt>
+              <dd class="article__draft">{t.article.draftNote}</dd>
+            </div>
+          )
+        }
+      </dl>
+    </aside>
+
+    <div class="article__body prose" data-prose data-labels={JSON.stringify({ copy: t.article.copy, copied: t.article.copied, copyCode: t.article.copyCode, linkCopied: t.article.linkCopied })}>
+      <Content components={{ Callout }} />
+    </div>
+
+    <div class="article__toc">
+      <Toc headings={headings} locale={locale} />
+    </div>
+
+    {
+      (newer || older) && (
+        <nav class="article__more" aria-label={t.article.more}>
+          {older ? (
+            <a href={older.url} class="more" lang={older.fallback ? LOCALE_INFO[older.locale].htmlLang : undefined}>
+              <span class="more__label">{t.article.previous}</span>
+              <span class="more__title">{older.post.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )}
+          {newer && (
+            <a href={newer.url} class="more more--newer" lang={newer.fallback ? LOCALE_INFO[newer.locale].htmlLang : undefined}>
+              <span class="more__label">{t.article.next}</span>
+              <span class="more__title">{newer.post.data.title}</span>
+            </a>
+          )}
+        </nav>
+      )
+    }
+  </article>
+</Base>
+
+<style>
+  /*
+   * Article grid
+   *  76rem and up   meta | prose | contents
+   *  52rem and up   meta | prose
+   *  narrower       stacked
+   */
+  .article {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'head'
+      'meta'
+      'body'
+      'more';
+    column-gap: var(--space-7);
+  }
+
+  .article__head {
+    grid-area: head;
+    padding-block: var(--space-9) var(--space-7);
+    max-width: 50rem;
+  }
+
+  .article__meta {
+    grid-area: meta;
+    margin-bottom: var(--space-7);
+  }
+
+  .article__body {
+    grid-area: body;
+    min-width: 0;
+  }
+
+  .article__toc {
+    display: none;
+  }
+
+  .article__more {
+    grid-area: more;
+  }
+
+  @media (min-width: 52rem) {
+    .article {
+      grid-template-columns: 11rem minmax(0, var(--measure));
+      grid-template-areas:
+        '. head'
+        'meta body'
+        '. more';
+    }
+
+    .article__meta {
+      position: sticky;
+      top: calc(var(--header-h) + var(--space-6));
+      align-self: start;
+      margin-bottom: 0;
+    }
+  }
+
+  @media (min-width: 76rem) {
+    .article {
+      grid-template-columns: 11rem minmax(0, var(--measure)) 13rem;
+      grid-template-areas:
+        '. head head'
+        'meta body toc'
+        '. more .';
+      justify-content: space-between;
+    }
+
+    .article__toc {
+      display: block;
+      grid-area: toc;
+      position: sticky;
+      top: calc(var(--header-h) + var(--space-6));
+      align-self: start;
+      max-height: calc(100dvh - var(--header-h) - var(--space-8));
+      overflow-y: auto;
+    }
+  }
+
+  .article__back {
+    display: inline-block;
+    margin-bottom: var(--space-6);
+    font-size: var(--step--1);
+    font-weight: 500;
+  }
+
+  .article__title {
+    width: fit-content;
+    font-size: var(--step-4);
+    line-height: 1.06;
+    letter-spacing: var(--track-title);
+    font-weight: 650;
+  }
+
+  :lang(zh) .article__title,
+  :lang(ja) .article__title {
+    font-size: clamp(1.875rem, 1.4rem + 1.8vw, 2.375rem);
+    line-height: 1.35;
+    font-weight: 600;
+  }
+
+  .article__lede {
+    margin-top: var(--space-5);
+    font-size: var(--step-1);
+    line-height: 1.5;
+    color: var(--graphite);
+    max-width: 38rem;
+  }
+
+  :lang(zh) .article__lede,
+  :lang(ja) .article__lede {
+    font-size: var(--step-0);
+    line-height: 1.85;
+    max-width: 34rem;
+  }
+
+  /* Metadata rail */
+  .article__meta dl {
+    display: grid;
+    gap: var(--space-4);
+    font-size: var(--step--1);
+  }
+
+  @media (max-width: 51.99rem) {
+    .article__meta dl {
+      grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+      padding-block: var(--space-4);
+      border-block: 1px solid var(--hairline);
+    }
+  }
+
+  .article__meta dt {
+    color: var(--graphite);
+    font-size: var(--step--2);
+  }
+
+  .article__meta dd {
+    color: var(--ink);
+  }
+
+  .article__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    list-style: none;
+    padding: 0;
+  }
+
+  .article__list a {
+    color: var(--accent);
+  }
+
+  .article__list a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .article__meta .article__draft {
+    color: var(--accent);
+  }
+
+  /* Previous and next */
+  .article__more {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+    margin-top: var(--space-8);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--hairline-strong);
+  }
+
+  .more {
+    display: grid;
+    gap: var(--space-1);
+    align-content: start;
+    padding: var(--space-4);
+    margin: calc(var(--space-4) * -1);
+    border-radius: var(--radius-m);
+    transition: background-color var(--dur-base) ease;
+  }
+
+  .more:hover {
+    background: var(--paper-sunken);
+  }
+
+  .more--newer {
+    text-align: right;
+  }
+
+  .more__label {
+    font-size: var(--step--2);
+    color: var(--graphite);
+  }
+
+  .more__title {
+    font-weight: 600;
+    letter-spacing: var(--track-heading);
+    line-height: 1.4;
+    transition: color var(--dur-fast) ease;
+  }
+
+  .more:hover .more__title {
+    color: var(--accent);
+  }
+
+  @media (max-width: 34rem) {
+    .article__more {
+      grid-template-columns: 1fr;
+    }
+
+    .more--newer {
+      text-align: left;
+    }
+  }
+</style>

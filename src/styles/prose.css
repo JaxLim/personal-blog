@@ -1,0 +1,345 @@
+/*
+ * Long-form reading. Body text is set in a text serif (Newsreader for Latin,
+ * Noto Serif SC or JP for Chinese and Japanese); headings, captions and UI
+ * stay in the sans so structure reads at a glance.
+ */
+.prose {
+  font-family: var(--font-serif);
+  font-size: var(--prose-size);
+  line-height: var(--leading-prose);
+  letter-spacing: var(--track-body);
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  hanging-punctuation: first allow-end;
+}
+
+.prose > * + * {
+  margin-top: 1.15em;
+}
+
+:lang(zh) .prose > * + *,
+:lang(ja) .prose > * + * {
+  margin-top: 1.3em;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+/* Headings */
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  scroll-margin-top: calc(var(--header-h) + var(--space-5));
+  position: relative;
+  letter-spacing: var(--track-heading);
+}
+
+.prose h2 {
+  font-size: var(--step-2);
+  margin-top: 2.4em;
+}
+
+.prose h3 {
+  font-size: var(--step-1);
+  margin-top: 2em;
+}
+
+.prose h4 {
+  font-size: var(--step-0);
+  margin-top: 1.8em;
+}
+
+:lang(zh) .prose :is(h2, h3, h4),
+:lang(ja) .prose :is(h2, h3, h4) {
+  line-height: 1.45;
+}
+
+:lang(zh) .prose h2,
+:lang(ja) .prose h2 {
+  font-size: var(--step-1);
+}
+
+:lang(zh) .prose h3,
+:lang(ja) .prose h3 {
+  font-size: 1.125rem;
+}
+
+.prose h2 + *,
+.prose h3 + *,
+.prose h4 + * {
+  margin-top: 0.6em;
+}
+
+/* Section anchor: appears on hover; clicking it copies the link */
+.prose .heading-anchor {
+  position: absolute;
+  left: -1.15em;
+  width: 1em;
+  color: var(--graphite-soft);
+  opacity: 0;
+  font-weight: 400;
+  text-align: center;
+  transition:
+    opacity var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.prose :is(h2, h3):hover .heading-anchor,
+.prose .heading-anchor:focus-visible {
+  opacity: 1;
+}
+
+.prose .heading-anchor:hover {
+  color: var(--accent);
+}
+
+/* Text */
+.prose strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* CJK has no true italics: emphasis is set in weight instead */
+:lang(zh) .prose em,
+:lang(ja) .prose em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition:
+    text-decoration-color var(--dur-fast) ease,
+    text-underline-offset var(--dur-base) var(--ease-out);
+}
+
+.prose a:hover {
+  text-decoration-color: currentColor;
+  text-underline-offset: 0.16em;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.2em;
+}
+
+.prose li + li,
+.prose li > ul,
+.prose li > ol {
+  margin-top: 0.4em;
+}
+
+.prose li::marker {
+  color: var(--graphite);
+}
+
+.prose ol li::marker {
+  font-family: var(--font-sans);
+  font-size: 0.85em;
+}
+
+.prose blockquote {
+  padding-left: 1.2em;
+  border-left: 2px solid var(--ink);
+  font-style: italic;
+  color: var(--ink);
+}
+
+:lang(zh) .prose blockquote,
+:lang(ja) .prose blockquote {
+  font-style: normal;
+}
+
+.prose hr {
+  border: 0;
+  height: 1px;
+  background: var(--hairline);
+  margin-block: 2.5em;
+}
+
+.prose img {
+  border-radius: var(--radius-m);
+  border: 1px solid var(--hairline);
+}
+
+.prose figcaption {
+  font-family: var(--font-sans);
+  font-size: var(--step--1);
+  color: var(--graphite);
+  margin-top: var(--space-3);
+}
+
+/* Inline code */
+.prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  padding: 0.12em 0.36em;
+  border-radius: var(--radius-s);
+  background: var(--paper-sunken);
+  border: 1px solid var(--hairline);
+  color: var(--ink);
+  letter-spacing: 0;
+  white-space: break-spaces;
+}
+
+/* ---------- Code blocks ----------
+ * src/scripts/ui.ts wraps each <pre> in .code-block with a header bar that
+ * names the language and holds the copy button.
+ */
+.prose .code-block {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-m);
+  background: var(--paper-sunken);
+  overflow: hidden;
+}
+
+@media (min-width: 64rem) {
+  .prose .code-block {
+    margin-inline: calc(var(--space-5) * -1);
+  }
+}
+
+.code-block__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-5);
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-sans);
+  font-size: var(--step--2);
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--graphite);
+}
+
+.prose pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  letter-spacing: 0;
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  background: transparent !important;
+  overflow-x: auto;
+  tab-size: 2;
+  font-variant-ligatures: none;
+}
+
+/* A bare <pre> before scripts run */
+.prose > pre {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-m);
+  background: var(--paper-sunken) !important;
+}
+
+.prose pre code {
+  font-family: inherit;
+}
+
+/* Shiki dual themes: follow the active colour scheme */
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .astro-code,
+  :root:not([data-theme='light']) .astro-code span {
+    color: var(--shiki-dark);
+  }
+}
+
+:root[data-theme='dark'] .astro-code,
+:root[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark);
+}
+
+.code-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-s);
+  font-weight: 500;
+  color: var(--graphite);
+  transition:
+    color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+}
+
+.code-copy svg {
+  width: 13px;
+  height: 13px;
+}
+
+.code-copy:hover {
+  color: var(--ink);
+  background: var(--paper-raised);
+}
+
+.code-copy[data-state='copied'] {
+  color: var(--accent);
+}
+
+/* Tables */
+.prose .table-scroll {
+  overflow-x: auto;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: var(--step--1);
+  line-height: 1.55;
+  letter-spacing: 0;
+}
+
+.prose th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom: 1px solid var(--hairline-strong);
+  white-space: nowrap;
+}
+
+.prose th,
+.prose td {
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
+  vertical-align: top;
+}
+
+.prose td {
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* Footnotes (GitHub-flavoured Markdown) */
+.prose .footnotes {
+  font-size: 0.9em;
+  color: var(--graphite);
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--space-5);
+  margin-top: var(--space-7);
+}
+
+.prose .footnotes h2 {
+  font-size: var(--step--1);
+  margin-top: 0;
+  color: var(--graphite);
+}
+
+.prose [data-footnote-ref] {
+  font-family: var(--font-sans);
+  font-size: 0.7em;
+  text-decoration: none;
+  padding-inline: 0.1em;
+}

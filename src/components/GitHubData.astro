@@ -1,0 +1,21 @@
+---
+/**
+ * Hands the build-time GitHub data to the browser, and starts the live
+ * updater (src/scripts/live.ts) on pages that show GitHub activity.
+ */
+import type { GitHubData } from '../lib/github-shared';
+
+interface Props {
+  data: GitHubData;
+}
+
+const { data } = Astro.props;
+const json = JSON.stringify(data).replace(/</g, '\\u003c');
+---
+
+<script is:inline type="application/json" id="github-data" set:html={json} />
+
+<script>
+  import { mountLive } from '../scripts/live';
+  document.addEventListener('astro:page-load', mountLive);
+</script>

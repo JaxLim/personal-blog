@@ -1,0 +1,92 @@
+---
+import type { MarkdownHeading } from 'astro';
+import type { Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  headings: MarkdownHeading[];
+  locale: Locale;
+}
+
+const t = useTranslations(Astro.props.locale);
+const items = Astro.props.headings.filter((h) => (h.depth === 2 || h.depth === 3) && h.slug !== 'footnote-label');
+---
+
+{
+  items.length > 1 && (
+    <nav class="toc" aria-labelledby="toc-title">
+      <p class="toc__title" id="toc-title">
+        {t.article.onThisPage}
+      </p>
+      <ol>
+        {items.map((h) => (
+          <li class:list={{ toc__sub: h.depth === 3 }}>
+            <a href={`#${h.slug}`} data-toc-link={h.slug}>
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ol>
+      <a class="toc__top" href="#main" data-back-to-top>
+        {t.article.backToTop}
+      </a>
+    </nav>
+  )
+}
+
+<style>
+  .toc {
+    font-size: var(--step--1);
+  }
+
+  .toc__title {
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: var(--space-3);
+  }
+
+  .toc ol {
+    position: relative;
+    list-style: none;
+    padding: 0;
+    border-left: 1px solid var(--hairline);
+  }
+
+  .toc li a {
+    display: block;
+    padding: var(--space-1) 0 var(--space-1) var(--space-4);
+    margin-left: -1px;
+    border-left: 1px solid transparent;
+    color: var(--graphite);
+    line-height: 1.45;
+    transition:
+      color var(--dur-fast) ease,
+      border-color var(--dur-base) ease;
+  }
+
+  .toc .toc__sub a {
+    padding-left: var(--space-6);
+    font-size: var(--step--2);
+  }
+
+  .toc li a:hover {
+    color: var(--ink);
+  }
+
+  .toc li a[aria-current='true'] {
+    color: var(--ink);
+    border-left-color: var(--accent);
+  }
+
+  .toc__top {
+    display: inline-block;
+    margin-top: var(--space-5);
+    font-size: var(--step--2);
+    color: var(--graphite);
+    transition: color var(--dur-fast) ease;
+  }
+
+  .toc__top:hover {
+    color: var(--accent);
+  }
+</style>

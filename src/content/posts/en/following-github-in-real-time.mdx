@@ -1,0 +1,77 @@
+---
+title: How this site follows my GitHub in real time
+description: A static site that still feels live. The build takes a snapshot of my GitHub activity, and the browser keeps it current with polite, conditional polling.
+date: 2026-10-29
+tags: [Astro, GitHub API, TypeScript]
+pinned: true
+---
+
+The home page of this site shows a trace of everything I've pushed in the last thirteen weeks, and a line describing my most recent activity. Both update on their own while the page is open. There's no server behind them, no database and no webhook receiver. The site is plain static HTML.
+
+This post explains how that works, and why I chose this shape over the alternatives.
+
+## Two halves: a snapshot and a stream
+
+The data arrives in two stages.
+
+1. **At build time**, Astro calls the GitHub API once, collects my repositories and recent events, and renders them straight into the HTML. A visitor with JavaScript turned off still sees a complete page, and search engines index real content.
+2. **In the browser**, a small module picks up where the snapshot left off. It asks GitHub for anything newer than what the build saw, and folds new activity into the page.
+
+The snapshot is embedded as JSON so the browser doesn't have to fetch it again:
+
+```astro
+---
+const json = JSON.stringify(data).replace(/</g, '\\u003c');
+---
+<script is:inline type="application/json" id="github-data" set:html={json} />
+```
+
+Escaping `<` matters: without it, a commit message containing a closing script tag would end the tag early.
+
+## Polling without being rude
+
+Anonymous requests to the GitHub API are limited to 60 an hour for each visitor's IP address. A page that polls every few seconds would burn through that in minutes, so the live module follows a few rules.
+
+### Conditional requests
+
+Every response carries an `ETag`. The next request sends it back in `If-None-Match`, and if nothing has changed GitHub answers `304 Not Modified` with an empty body.
+
+```ts
+const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
+const etag = state.etags[path];
+if (etag) headers['If-None-Match'] = etag;
+
+const res = await fetch(API + path, { headers, cache: 'no-cache' });
+if (res.status === 304) return null; // nothing new
+```
+
+### Let GitHub set the pace
+
+The events endpoint returns an `X-Poll-Interval` header, usually 60 seconds. The poller never asks more often than that, and it reads `X-RateLimit-Remaining` to back off entirely when the budget runs low.
+
+### Pause when nobody is looking
+
+When the tab is hidden, polling stops. When the reader comes back, it catches up immediately if the interval has passed.
+
+<Callout type="tip" title="Why not a webhook?">
+A webhook would be instant, but it needs a server to receive it and a way to push the change to open pages. For a personal site, a one-minute delay is worth not running any infrastructure.
+</Callout>
+
+## Making the trace believable
+
+The pulse counts *contributions*, not just commits: a push counts as its number of commits, and opening a pull request, filing an issue or publishing a release counts as one each. Starring someone else's repository doesn't count.
+
+When the build has a GitHub token, it asks the GraphQL API for the exact contribution calendar instead. That's the same data as the green squares on a GitHub profile, and it includes private contributions if the profile shows them.
+
+| Source | Needs a token | Includes private work | Exact daily counts |
+| --- | --- | --- | --- |
+| Public events API | No | No | Close, from the last 300 events |
+| GraphQL calendar | Yes | If enabled on the profile | Yes |
+
+## Keeping the page current between builds
+
+Live polling only covers people who have the page open. To keep the static HTML fresh for everyone else, a scheduled GitHub Actions workflow rebuilds the site every few hours. Between the two, the page is never more than a minute behind for an active reader, and never more than a few hours behind for a new one.
+
+## What I'd change next
+
+If the site grows, I'd move the snapshot into an edge function with a short cache, so every visitor shares one request to GitHub instead of making their own. For now, the static version is fast, free to host, and has nothing that can go down.

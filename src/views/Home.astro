@@ -1,0 +1,156 @@
+---
+import Base from '../layouts/Base.astro';
+import Pulse from '../components/Pulse.astro';
+import LatestActivity from '../components/LatestActivity.astro';
+import PostList from '../components/PostList.astro';
+import RepoLedger from '../components/RepoLedger.astro';
+import GitHubData from '../components/GitHubData.astro';
+import { getProjectData } from '../lib/projects';
+import { getHomePosts, getPosts } from '../lib/posts';
+import { localePath, type Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+import { site } from '../site.config';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const [data, posts, all] = await Promise.all([getProjectData(), getHomePosts(locale, 5), getPosts(locale)]);
+const repos = data.repos.slice(0, site.github.homeCount);
+const status = site.status[locale];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.name,
+  url: new URL(localePath(locale, '/'), Astro.site).href,
+  description: site.description[locale],
+  sameAs: [
+    ...(site.github.username ? [`https://github.com/${site.github.username}`] : []),
+    ...site.links.map((l) => l.href),
+  ],
+};
+---
+
+<Base locale={locale} jsonLd={jsonLd}>
+  <section class="hero page" aria-labelledby="hero-name">
+    <h1 class="hero__name" id="hero-name" translate="no">{site.name}</h1>
+    <div class="hero__intro">
+      <p class="hero__tagline">{site.tagline[locale]}</p>
+      {
+        status && (
+          <p class="hero__status">
+            <span class="hero__status-dot" aria-hidden="true" />
+            {status}
+          </p>
+        )
+      }
+    </div>
+    <div class="hero__pulse">
+      <Pulse data={data} locale={locale} />
+      <LatestActivity data={data} locale={locale} />
+    </div>
+  </section>
+
+  <div class="page">
+    <section class="rail" aria-labelledby="writing-title">
+      <div class="rail__head">
+        <h2 class="rail__title" id="writing-title">{t.nav.writing}</h2>
+        <p class="rail__note">{t.home.writingNote}</p>
+        <a class="rail__more link" href={localePath(locale, '/writing/')}>
+          {all.length > posts.length ? t.home.allPosts(all.length) : t.home.archive}
+        </a>
+      </div>
+      <PostList posts={posts} locale={locale} />
+    </section>
+
+    <section class="rail" aria-labelledby="repos-title">
+      <div class="rail__head">
+        <h2 class="rail__title" id="repos-title">{t.home.repos}</h2>
+        <p class="rail__note">{t.home.reposNote}</p>
+        <a class="rail__more link" href={localePath(locale, '/projects/')}>{t.home.allProjects}</a>
+      </div>
+      <RepoLedger repos={repos} locale={locale} />
+    </section>
+  </div>
+
+  <GitHubData data={data} />
+</Base>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: clamp(var(--space-8), 11vw, 9rem);
+    padding-bottom: var(--space-8);
+  }
+
+  .hero__name {
+    font-size: var(--step-display);
+    line-height: 0.88;
+    font-weight: 650;
+    letter-spacing: -0.055em;
+    margin-left: -0.055em; /* optical alignment of the capital with the column edge */
+  }
+
+  .hero__intro {
+    margin-top: var(--space-5);
+  }
+
+  .hero__tagline {
+    max-width: 26ch;
+    font-size: clamp(var(--step-1), 1rem + 0.9vw, var(--step-2));
+    line-height: 1.38;
+    letter-spacing: var(--track-heading);
+    color: var(--graphite);
+  }
+
+  :lang(zh) .hero__tagline,
+  :lang(ja) .hero__tagline {
+    max-width: 19em;
+    font-size: clamp(1.0625rem, 0.9rem + 0.6vw, 1.3125rem);
+    line-height: 1.75;
+  }
+
+  .hero__status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
+    padding: 0.3rem 0.8rem 0.3rem 0.65rem;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px;
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+  }
+
+  .hero__status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .hero__pulse {
+    margin-top: clamp(var(--space-7), 8vw, var(--space-9));
+  }
+
+  /* Align the introduction with the content column of the sections below */
+  @media (min-width: 52rem) {
+    .hero {
+      grid-template-columns: minmax(12rem, 3fr) minmax(0, 9fr);
+      column-gap: var(--space-6);
+    }
+
+    .hero__name,
+    .hero__pulse {
+      grid-column: 1 / -1;
+    }
+
+    .hero__intro {
+      grid-column: 2;
+    }
+  }
+</style>

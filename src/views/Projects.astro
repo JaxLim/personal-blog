@@ -1,0 +1,83 @@
+---
+import Base from '../layouts/Base.astro';
+import RepoLedger from '../components/RepoLedger.astro';
+import Pulse from '../components/Pulse.astro';
+import LatestActivity from '../components/LatestActivity.astro';
+import GitHubData from '../components/GitHubData.astro';
+import { getProjectData } from '../lib/projects';
+import { compactNumber, relativeTime } from '../lib/format';
+import type { Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+import { site } from '../site.config';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const data = await getProjectData();
+const stars = data.repos.reduce((a, r) => a + r.stars, 0);
+const profile = site.github.username ? `https://github.com/${site.github.username}` : null;
+---
+
+<Base locale={locale} title={t.projects.title} description={t.projects.description}>
+  <div class="page">
+    <header class="intro">
+      <h1 class="intro__title">{t.projects.title}</h1>
+      <p class="intro__lede">{t.projects.lede}</p>
+    </header>
+
+    <section class="rail" aria-labelledby="activity-title">
+      <div class="rail__head">
+        <h2 class="rail__title" id="activity-title">{t.projects.activity}</h2>
+        <p class="rail__note">{t.projects.activityNote}</p>
+      </div>
+      <div class="activity">
+        <Pulse data={data} locale={locale} />
+        <LatestActivity data={data} locale={locale} />
+      </div>
+    </section>
+
+    <section class="rail" aria-labelledby="repos-title">
+      <div class="rail__head">
+        <h2 class="rail__title" id="repos-title">{t.home.repos}</h2>
+        <p class="rail__note">{t.projects.summary(data.repos.length, compactNumber(stars, locale))}</p>
+        {
+          profile && (
+            <a class="rail__more link" href={profile} rel="me noopener">
+              {t.projects.viewOnGitHub}
+            </a>
+          )
+        }
+      </div>
+      <div>
+        <RepoLedger repos={data.repos} locale={locale} controls />
+        {
+          !data.sample && (
+            <p class="synced">
+              {t.projects.synced}{' '}
+              <time datetime={data.fetchedAt} data-time data-synced>
+                {relativeTime(data.fetchedAt, locale)}
+              </time>
+            </p>
+          )
+        }
+      </div>
+    </section>
+  </div>
+
+  <GitHubData data={data} />
+</Base>
+
+<style>
+  .activity {
+    padding-top: var(--space-6);
+  }
+
+  .synced {
+    margin-top: var(--space-4);
+    font-size: var(--step--2);
+    color: var(--graphite);
+  }
+</style>

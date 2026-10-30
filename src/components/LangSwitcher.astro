@@ -1,0 +1,235 @@
+---
+/**
+ * Language menu. Each option opens the current page in that language; when
+ * a post has no translation, it opens that language's writing archive and
+ * says so. src/scripts/ui.ts keeps the links current across page swaps
+ * and saves the choice.
+ */
+import { LOCALES, LOCALE_INFO, localePath, type Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  alternates: Partial<Record<Locale, string>>;
+  /** 'menu': compact button with a popover; 'inline': a row of options (mobile sheet). */
+  variant?: 'menu' | 'inline';
+}
+
+const { locale, alternates, variant = 'menu' } = Astro.props;
+const t = useTranslations(locale);
+const options = LOCALES.map((l) => ({
+  locale: l,
+  info: LOCALE_INFO[l],
+  href: alternates[l] ?? localePath(l, '/writing/'),
+  fallback: localePath(l, '/writing/'),
+  missing: !alternates[l],
+}));
+const id = `lang-${variant}`;
+---
+
+{
+  variant === 'menu' ? (
+    <div class="lang" data-lang-menu>
+      <button
+        class="lang__button"
+        type="button"
+        aria-expanded="false"
+        aria-controls={id}
+        aria-label={t.lang.change(LOCALE_INFO[locale].label)}
+        data-lang-toggle
+      >
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.25" />
+          <path d="M1.75 8h12.5M8 1.75c1.7 1.8 2.5 3.9 2.5 6.25S9.7 12.45 8 14.25C6.3 12.45 5.5 10.35 5.5 8S6.3 3.55 8 1.75z" fill="none" stroke="currentColor" stroke-width="1.25" />
+        </svg>
+        <span class="lang__current">{LOCALE_INFO[locale].short}</span>
+      </button>
+      <div class="lang__panel" id={id} data-lang-panel hidden>
+        <p class="lang__heading">{t.lang.label}</p>
+        <ul>
+          {options.map((o) => (
+            <li>
+              <a
+                href={o.href}
+                hreflang={o.info.htmlLang}
+                lang={o.info.htmlLang}
+                data-lang-option={o.locale}
+                data-fallback={o.fallback}
+                aria-current={o.locale === locale ? 'true' : undefined}
+              >
+                <span class="lang__name">{o.info.label}</span>
+                <span class="lang__note" data-lang-note hidden={!o.missing || o.locale === locale}>
+                  {t.lang.notTranslated}
+                </span>
+                <svg class="lang__check" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  ) : (
+    <ul class="lang-inline" aria-label={t.lang.label}>
+      {options.map((o) => (
+        <li>
+          <a
+            href={o.href}
+            hreflang={o.info.htmlLang}
+            lang={o.info.htmlLang}
+            data-lang-option={o.locale}
+            data-fallback={o.fallback}
+            aria-current={o.locale === locale ? 'true' : undefined}
+          >
+            {o.info.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+<style>
+  .lang {
+    position: relative;
+  }
+
+  .lang__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 2.25rem;
+    padding: 0 0.65rem;
+    border-radius: 999px;
+    font-size: var(--step--1);
+    font-weight: 500;
+    color: var(--graphite);
+    transition:
+      color var(--dur-fast) ease,
+      background-color var(--dur-fast) ease;
+  }
+
+  .lang__button svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .lang__button:hover,
+  .lang__button[aria-expanded='true'] {
+    color: var(--ink);
+    background: var(--paper-sunken);
+  }
+
+  .lang__current {
+    min-width: 1.4em;
+    text-align: left;
+  }
+
+  .lang__panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    width: 13.5rem;
+    padding: var(--space-2);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-l);
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-float);
+    transform-origin: top right;
+  }
+
+  .lang__panel:not([hidden]) {
+    animation: pop-in 180ms var(--ease-out);
+  }
+
+  .lang__heading {
+    padding: var(--space-1) var(--space-3) var(--space-2);
+    font-size: var(--step--2);
+    color: var(--graphite);
+  }
+
+  .lang__panel ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .lang__panel a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-m);
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    transition: background-color var(--dur-fast) ease;
+  }
+
+  .lang__panel a:hover,
+  .lang__panel a:focus-visible {
+    background: var(--paper-sunken);
+    outline-offset: -2px;
+  }
+
+  .lang__name {
+    grid-column: 1;
+    font-weight: 500;
+  }
+
+  .lang__note {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: var(--step--2);
+    color: var(--graphite);
+  }
+
+  .lang__check {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+    opacity: 0;
+  }
+
+  .lang__panel a[aria-current='true'] {
+    color: var(--ink);
+  }
+
+  .lang__panel a[aria-current='true'] .lang__check {
+    opacity: 1;
+  }
+
+  /* Inline variant, for the mobile menu */
+  .lang-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+  }
+
+  .lang-inline a {
+    display: inline-block;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px;
+    font-size: var(--step--1);
+    color: var(--graphite);
+  }
+
+  .lang-inline a[aria-current='true'] {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+  }
+</style>

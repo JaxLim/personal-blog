@@ -1,0 +1,400 @@
+---
+import { localePath, splitLocale, type Locale } from '../i18n/config';
+import { useTranslations } from '../i18n/ui';
+import { site } from '../site.config';
+import LangSwitcher from './LangSwitcher.astro';
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props {
+  locale: Locale;
+  alternates: Partial<Record<Locale, string>>;
+}
+
+const { locale, alternates } = Astro.props;
+const t = useTranslations(locale);
+
+const nav = [
+  { key: '/writing/', label: t.nav.writing },
+  { key: '/projects/', label: t.nav.projects },
+  { key: '/about/', label: t.nav.about },
+];
+
+const { path } = splitLocale(Astro.url.pathname);
+const isCurrent = (key: string) => path.startsWith(key) || (key === '/writing/' && path.startsWith('/tags/'));
+---
+
+<header class="header" data-header transition:persist={`header-${locale}`}>
+  <div class="page header__inner">
+    <a class="wordmark" href={localePath(locale, '/')} aria-label={`${site.name}, ${t.nav.home}`}>
+      <svg class="wordmark__mark" viewBox="0 0 14 16" aria-hidden="true">
+        <rect x="0" y="9" width="2.5" height="7" rx="1"></rect>
+        <rect x="5.5" y="4" width="2.5" height="12" rx="1"></rect>
+        <rect class="wordmark__live" x="11" y="0" width="2.5" height="16" rx="1"></rect>
+      </svg>
+      <span translate="no">{site.name}</span>
+    </a>
+
+    <nav class="nav" aria-label={t.nav.label}>
+      <ul data-nav-list>
+        {
+          nav.map((item) => (
+            <li>
+              <a
+                href={localePath(locale, item.key)}
+                class="nav__link"
+                aria-current={isCurrent(item.key) ? 'page' : undefined}
+                data-nav={item.key}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <span class="nav__indicator" data-nav-indicator aria-hidden="true"></span>
+    </nav>
+
+    <div class="actions">
+      <button class="search-trigger" type="button" data-search-open aria-label={t.search.title}>
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.4"></circle>
+          <path d="M10.5 10.5l3.25 3.25" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path>
+        </svg>
+        <span class="search-trigger__label">{t.search.button}</span>
+        <kbd class="search-trigger__kbd" data-shortcut>Ctrl K</kbd>
+      </button>
+      <div class="actions__desktop">
+        <LangSwitcher locale={locale} alternates={alternates} />
+        <ThemeToggle locale={locale} />
+      </div>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-menu" data-menu-toggle>
+        <span class="visually-hidden" data-menu-label data-open={t.nav.menu} data-close={t.nav.closeMenu}>{t.nav.menu}</span>
+        <span class="menu-button__bars" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="sheet" id="site-menu" data-menu hidden>
+    <div class="page sheet__inner">
+      <ul class="sheet__nav">
+        <li><a href={localePath(locale, '/')}>{t.nav.home}</a></li>
+        {
+          nav.map((item) => (
+            <li>
+              <a href={localePath(locale, item.key)} aria-current={isCurrent(item.key) ? 'page' : undefined} data-nav={item.key}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="sheet__row">
+        <LangSwitcher locale={locale} alternates={alternates} variant="inline" />
+        <ThemeToggle locale={locale} />
+      </div>
+    </div>
+  </div>
+
+  <div class="header__progress" aria-hidden="true"></div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    height: var(--header-h);
+    background: color-mix(in srgb, var(--paper) 90%, transparent);
+    backdrop-filter: saturate(1.6) blur(16px);
+    -webkit-backdrop-filter: saturate(1.6) blur(16px);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--dur-base) ease;
+  }
+
+  .header[data-scrolled],
+  .header[data-menu-open] {
+    border-bottom-color: var(--hairline);
+  }
+
+  .header__inner {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+  }
+
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-right: auto;
+    font-weight: 650;
+    font-size: var(--step-0);
+    letter-spacing: -0.02em;
+  }
+
+  /* Three ticks from the activity pulse: the site's signature mark */
+  .wordmark__mark {
+    width: 14px;
+    height: 16px;
+    fill: var(--ink);
+  }
+
+  .wordmark__mark rect {
+    transform-origin: bottom;
+    transition: transform var(--dur-slow) var(--ease-spring);
+  }
+
+  .wordmark:hover .wordmark__mark rect:nth-child(1) {
+    transform: scaleY(1.4);
+  }
+
+  .wordmark:hover .wordmark__mark rect:nth-child(2) {
+    transform: scaleY(0.7);
+  }
+
+  .wordmark__live {
+    fill: var(--accent);
+  }
+
+  /* Navigation with a sliding indicator under the current section */
+  .nav {
+    position: relative;
+  }
+
+  .nav ul {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    gap: var(--space-1);
+  }
+
+  .nav__link {
+    display: block;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--step--1);
+    font-weight: 500;
+    color: var(--graphite);
+    border-radius: var(--radius-s);
+    transition: color var(--dur-fast) ease;
+  }
+
+  .nav__link:hover,
+  .nav__link[aria-current='page'] {
+    color: var(--ink);
+  }
+
+  .nav__indicator {
+    position: absolute;
+    left: 0;
+    bottom: 2px;
+    height: 1px;
+    width: var(--w, 0);
+    background: var(--ink);
+    transform: translateX(var(--x, 0));
+    opacity: var(--o, 0);
+    transition:
+      transform var(--dur-slow) var(--ease-out),
+      width var(--dur-slow) var(--ease-out),
+      opacity var(--dur-base) ease;
+  }
+
+  .actions,
+  .actions__desktop {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .search-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: 2.25rem;
+    padding: 0 0.5rem 0 0.75rem;
+    margin-right: var(--space-2);
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px;
+    background: var(--paper-raised);
+    font-size: var(--step--1);
+    color: var(--graphite);
+    transition:
+      color var(--dur-fast) ease,
+      border-color var(--dur-fast) ease;
+  }
+
+  .search-trigger:hover {
+    color: var(--ink);
+    border-color: var(--graphite-soft);
+  }
+
+  .search-trigger svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .search-trigger__label {
+    min-width: 4.5rem;
+    text-align: left;
+  }
+
+  .menu-button {
+    display: none;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+  }
+
+  .menu-button__bars {
+    display: grid;
+    gap: 5px;
+    width: 16px;
+  }
+
+  .menu-button__bars span {
+    display: block;
+    height: 1.5px;
+    border-radius: 1px;
+    background: var(--ink);
+    transition: transform var(--dur-slow) var(--ease-out);
+  }
+
+  .menu-button[aria-expanded='true'] .menu-button__bars span:first-child {
+    transform: translateY(3.25px) rotate(45deg);
+  }
+
+  .menu-button[aria-expanded='true'] .menu-button__bars span:last-child {
+    transform: translateY(-3.25px) rotate(-45deg);
+  }
+
+  /* Mobile sheet */
+  .sheet {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    border-bottom: 1px solid var(--hairline);
+    background: var(--paper);
+    box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.25);
+  }
+
+  .sheet:not([hidden]) {
+    animation: sheet-in var(--dur-slow) var(--ease-out);
+  }
+
+  .sheet__inner {
+    padding-block: var(--space-4) var(--space-6);
+  }
+
+  .sheet__nav {
+    list-style: none;
+    padding: 0;
+  }
+
+  .sheet__nav a {
+    display: block;
+    padding-block: var(--space-3);
+    border-bottom: 1px solid var(--hairline);
+    font-size: var(--step-2);
+    font-weight: 600;
+    letter-spacing: var(--track-heading);
+    color: var(--ink);
+  }
+
+  .sheet__nav a[aria-current='page'] {
+    color: var(--accent);
+  }
+
+  .sheet:not([hidden]) .sheet__nav li {
+    animation: item-in var(--dur-slow) var(--ease-out) both;
+  }
+
+  .sheet__nav li:nth-child(2) {
+    animation-delay: 30ms;
+  }
+
+  .sheet__nav li:nth-child(3) {
+    animation-delay: 60ms;
+  }
+
+  .sheet__nav li:nth-child(4) {
+    animation-delay: 90ms;
+  }
+
+  .sheet__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+  }
+
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes item-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+
+  /* Reading progress on articles, driven by src/scripts/ui.ts */
+  .header__progress {
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    height: 1px;
+    width: 100%;
+    background: var(--accent);
+    transform-origin: left;
+    transform: scaleX(var(--progress, 0));
+    opacity: 0;
+    transition: opacity var(--dur-base) ease;
+  }
+
+  .header[data-reading] .header__progress {
+    opacity: 1;
+  }
+
+  @media (max-width: 56rem) {
+    .search-trigger__kbd {
+      display: none;
+    }
+  }
+
+  @media (max-width: 46rem) {
+    .nav,
+    .actions__desktop {
+      display: none;
+    }
+
+    .menu-button {
+      display: grid;
+    }
+
+    .search-trigger {
+      width: 2.25rem;
+      padding: 0;
+      justify-content: center;
+      margin-right: 0;
+      border-color: transparent;
+      background: none;
+    }
+
+    .search-trigger__label {
+      display: none;
+    }
+  }
+
+  @media (min-width: 46.01rem) {
+    .sheet {
+      display: none;
+    }
+  }
+</style>
