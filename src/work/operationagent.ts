@@ -2,6 +2,9 @@ import type { CaseStudy } from './types';
 import workbench from '../assets/work/operationagent/workbench.png';
 import settings from '../assets/work/operationagent/settings.png';
 import dark from '../assets/work/operationagent/dark.png';
+import workbenchZh from '../assets/work/operationagent/workbench-zh.png';
+import settingsZh from '../assets/work/operationagent/settings-zh.png';
+import darkZh from '../assets/work/operationagent/dark-zh.png';
 
 const C = [20, 215, 420, 625, 820, 1010];
 const R = [24, 134, 244, 354, 464];
@@ -215,18 +218,21 @@ export const operationagent: CaseStudy = {
   screens: [
     {
       image: workbench,
+      zh: workbenchZh,
       alt: { en: 'OperationAgent workbench on Windows: a task refused by the control plane, with the status panel showing agentReady false', zh: 'Windows 上的 OperationAgent 工作台：任务被控制面拒绝，状态面板显示 agentReady 为 false', ja: 'Windows 上の OperationAgent のワークベンチ。コントロールプレーンがタスクを拒否し、ステータスパネルに agentReady false と表示されている' },
       caption: { en: 'Today’s build refuses the task instead of running it unprotected', zh: '当前版本会直接拒绝任务，而不是在没有保护的情况下执行', ja: '現在のビルドは、保護なしで実行せずにタスクを拒否する' },
     },
     {
       image: settings,
-      alt: { en: 'Models & Credentials settings with Claude model choices and an API key field', zh: '模型与凭据设置：Claude 模型选择和 API Key 输入框', ja: 'Claude モデルの選択と API キー欄がある「Models & Credentials」設定' },
-      caption: { en: 'Model settings: the key is encrypted by the OS and never reaches the worker', zh: '模型设置：API Key 由操作系统加密，Worker 永远拿不到', ja: 'モデル設定：キーは OS で暗号化され、Worker には渡らない' },
+      zh: settingsZh,
+      alt: { en: 'Providers settings: Anthropic, OpenAI, OpenRouter and Google Gemini, with account sign-in and custom endpoints locked', zh: '供应商设置：Anthropic、OpenAI、OpenRouter 和 Google Gemini，账号登录与自定义端点处于锁定状态', ja: 'プロバイダー設定。Anthropic、OpenAI、OpenRouter、Google Gemini があり、アカウントログインとカスタムエンドポイントはロックされている' },
+      caption: { en: 'Providers: keys are encrypted by the OS and never reach the worker', zh: '供应商设置：密钥由操作系统加密，Worker 拿不到', ja: 'プロバイダー：キーは OS で暗号化され、Worker には渡らない' },
     },
     {
       image: dark,
-      alt: { en: 'The workbench in dark theme, with the Files panel explaining that file reading is locked', zh: '深色主题下的工作台，文件面板说明读取文件的能力尚未开放', ja: 'ダークテーマのワークベンチ。Files パネルにファイル読み取りがロックされている理由が表示されている' },
-      caption: { en: 'Locked features say why they are locked', zh: '尚未开放的功能，都会说明原因', ja: 'ロック中の機能は、その理由を表示する' },
+      zh: darkZh,
+      alt: { en: 'Agent profiles in the dark theme: four built-in agents and an empty custom list', zh: '深色主题下的 Agent 配置：四个内置 Agent，自定义列表为空', ja: 'ダークテーマのエージェント設定。組み込みエージェントが 4 つあり、カスタムはまだない' },
+      caption: { en: 'Agent profiles are saved as settings until the agent loop exists', zh: 'Agent 配置：在 Agent Loop 完成前只作为设置保存', ja: 'エージェントのプロファイルは、ループができるまで設定として保存されるだけ' },
     },
   ],
   lessons: [
