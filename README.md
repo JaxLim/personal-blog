@@ -1,161 +1,119 @@
-# Ethan — portfolio and technical blog
+**简体中文** | [English](README.en.md)
 
-The source of [jaxlim.github.io/personal-blog](https://jaxlim.github.io/personal-blog/): case studies of the systems I build, technical writing, and my GitHub activity, live. In English, Simplified Chinese and Japanese.
+# personal-blog
 
-Built with [Astro](https://astro.build) and TypeScript. Static HTML, no server, no tracking.
+记录后端架构、前端界面与独立开发点滴的个人空间，在线地址：[jaxlim.github.io/personal-blog](https://jaxlim.github.io/personal-blog/)。
 
-## What's inside
+网站里有我在 GitHub 上的开源项目介绍、开发笔记和技术文章，以及实时同步的 GitHub 动态，支持简体中文、英文和日文。整站用 [Astro](https://astro.build) 和 TypeScript 搭建，生成的是纯静态 HTML：不需要服务器，也没有任何访问统计和追踪。
 
-- **Case studies** for [OrderPilot](https://github.com/JaxLim/OrderPilot) and [OperationAgent](https://github.com/JaxLim/OperationAgent). Each one includes the hard problems and the tests that prove them, an architecture diagram you can explore (select a part, or play a request through the system), and an interactive demo:
-  - **OrderPilot:** an oversell lab, with forty buyers competing for ten units.
-  - **OperationAgent:** the worker-isolation gate, shown as a console.
-- **Writing** with a reading layout built for technical posts:
-  - table of contents with scroll spy and a minutes-left counter
-  - code blocks with file titles, highlighted lines, diffs and a copy button
-  - footnote previews, zoomable figures, and heading links you can copy
-  - previous/next navigation and a link to the related case study
-- **Live GitHub data:**
-  - the contribution calendar as an activity "pulse"
-  - your latest push, with its commit message
-  - every public repository, with sorting and a language filter
-  - the browser keeps all of it current while a page is open
-- **Three languages** at their own URLs (`/`, `/zh/`, `/ja/`):
-  - a remembered choice and a language menu
-  - `hreflang`, a sitemap and an RSS feed for each language
-  - typography tuned for CJK
-- **Link previews**: an Open Graph image is generated for every page, post and case study, in each language.
-- **Motion with restraint**:
-  - smooth scrolling and reveals as you scroll
-  - headlines that rise line by line, and labels that roll on hover
-  - shared-element page transitions
-  - everything turns off under `prefers-reduced-motion`
+![首页](docs/screenshots/home-zh.png)
 
-## Quick start
+## 当前状态
+
+- **已上线**：通过 GitHub Actions 部署到 GitHub Pages，每次推送到 `main` 时构建，另外每 6 小时自动重建一次。
+- **内容**：两篇项目详解（[OrderPilot](https://github.com/JaxLim/OrderPilot)、[OperationAgent](https://github.com/JaxLim/OperationAgent)）；两篇文章，各有中、英、日三个版本；另有一篇排版示例草稿，只在本地开发时可见。
+- **可选项，目前未配置**：页脚邮箱（`email` 为空时不显示）和关于页的个人照片（没有 `src/assets/portrait.jpg` 时不显示）。
+
+## 功能
+
+| 模块 | 内容 |
+| --- | --- |
+| 项目详解 | 每篇都介绍了主要难点和对应的测试，配有可交互的架构图（点选组件，或播放一个请求在系统里的完整流程），还有一个可以上手的演示：OrderPilot 是“40 个买家抢 10 件库存”的超卖实验，OperationAgent 是安全门禁控制台 |
+| 文章 | 目录随滚动高亮、剩余阅读时间、代码块（文件名、行高亮、diff、一键复制）、脚注预览、可放大的图片、上一篇/下一篇 |
+| GitHub 动态 | 贡献日历（首页的活动“脉搏”图）、最近一次推送和它的提交信息、全部公开仓库（可排序、可按语言筛选）；页面开着时会自动刷新 |
+| 多语言 | `/`、`/zh/`、`/ja/` 三套独立 URL，会记住你选的语言；每种语言都有自己的 `hreflang`、sitemap 和 RSS；中日文排版单独调过 |
+| 分享预览 | 构建时为每个页面、文章和案例生成对应语言的 Open Graph 图片 |
+| 动效 | 平滑滚动、滚动时渐显、页面切换过渡；系统开启“减少动态效果”后全部关闭 |
+
+| 项目详解 · 架构图 | 文章页 |
+| --- | --- |
+| ![项目详解中的可交互架构图](docs/screenshots/architecture-zh.png) | ![文章页](docs/screenshots/post-zh.png) |
+
+![首页的精选项目](docs/screenshots/work-zh.png)
+
+## 技术概览
+
+- **框架**：Astro 7（静态输出）+ TypeScript，文章使用 Markdown / MDX，代码高亮使用 Shiki。
+- **内容**：文章用的是 Astro 内容集合（`src/content/posts/{en,zh,ja}/`）；项目详解是带类型的 TypeScript 文件（`src/work/`），每段文字都要写三种语言，漏了翻译类型检查就会报错。
+- **GitHub 数据**：`scripts/fetch-github.mjs` 在构建前抓取数据，写入 `src/data/github.json`（该文件有意提交到仓库）。仓库、事件和贡献日历分开抓取，哪个失败就沿用哪个的旧数据，所以断网也能构建。浏览器端由 `src/scripts/live.ts` 轮询公开事件接口，遵守 ETag 和 `X-Poll-Interval`，标签页切到后台时暂停。
+- **图片生成**：分享预览图由 satori 绘制、`@resvg/resvg-js` 渲染为 PNG。
+- **字体**：Schibsted Grotesk、Newsreader、JetBrains Mono，中日文正文使用 Noto Serif；全部通过 Fontsource 自托管。
+
+## 本地运行
+
+需要 **Node.js 22.12 或更高版本**。
 
 ```sh
+git clone https://github.com/JaxLim/personal-blog.git
+cd personal-blog
 npm install
-npm run dev        # http://localhost:4321
+npm run dev
 ```
 
-Node 22.12 or newer.
+打开 http://localhost:4321 。中文版在 http://localhost:4321/zh/ 。
 
-## Commands
+`npm run dev` 会先复制字体；如果 `src/data/github.json` 已超过 30 分钟没更新，还会顺便刷新 GitHub 数据。没有网络也能启动，只是显示之前保存的数据。
 
-| Command | What it does |
+### 常用命令
+
+| 命令 | 作用 |
 | --- | --- |
-| `npm run dev` | Development server. Refreshes GitHub data if the saved copy is over 30 minutes old. |
-| `npm run build` | Fetches GitHub data, then builds the site into `dist/`. |
-| `npm run preview` | Serves the built site. |
-| `npm run check` | Type-checks everything, including every translation. |
-| `npm run github` | Fetches GitHub data now (`GITHUB_TOKEN=… npm run github` for the exact calendar). |
-| `npm run new "Title" -- --lang zh` | Starts a draft post (`--md` for plain Markdown, `--slug` to choose the file name). |
+| `npm run dev` | 启动开发服务器 |
+| `npm run build` | 抓取 GitHub 数据，然后构建到 `dist/` |
+| `npm run preview` | 本地预览构建结果 |
+| `npm run check` | 类型检查（包括所有翻译） |
+| `npm run github` | 立即抓取 GitHub 数据 |
+| `npm run new "标题" -- --lang zh` | 新建一篇草稿（`--md` 使用纯 Markdown，`--slug` 指定文件名） |
 
-## Deploying
+### 环境变量（可选）
 
-The site deploys to **GitHub Pages** from `.github/workflows/deploy.yml`. The workflow runs on every push to `main`, every six hours (so new visitors get fresh GitHub data in the HTML), and on demand from the Actions tab.
+复制 `.env.example` 为 `.env` 后按需填写：
 
-One-time setup, already done for this repository: **Settings → Pages → Source: GitHub Actions**.
-
-The workflow sets `SITE_URL` and `BASE_PATH` from the Pages configuration, so the same code works:
-
-- at a project URL (`/personal-blog/`)
-- at a user site (rename the repository to `jaxlim.github.io`)
-- at a custom domain (add it under Settings → Pages)
-
-To host elsewhere (Vercel, Netlify, Cloudflare Pages), build with `npm run build`, publish `dist/`, and set `SITE_URL` to the public origin. Set `BASE_PATH` only if the site isn't at the root.
-
-| Variable | Used for |
+| 变量 | 用途 |
 | --- | --- |
-| `SITE_URL` | Canonical URLs, `hreflang`, RSS, sitemap, link previews |
-| `BASE_PATH` | Serving from a sub-path, e.g. `/personal-blog` |
-| `GITHUB_TOKEN` | The exact contribution calendar (GraphQL) and a higher API rate limit |
+| `SITE_URL` | 站点公开地址，用于规范链接、`hreflang`、RSS、sitemap 和分享预览 |
+| `BASE_PATH` | 部署在子路径时设置，例如 `/personal-blog` |
+| `GITHUB_TOKEN` | 不需要任何权限的 token，用来获取精确的贡献日历、提高 API 限额。只在构建时使用，不会发到浏览器 |
 
-## GitHub data
+## 部署
 
-`scripts/fetch-github.mjs` runs before every build and saves `src/data/github.json`, which the site reads. That file is committed on purpose:
+`.github/workflows/deploy.yml` 会在三种情况下构建并发布到 GitHub Pages：推送到 `main`、每 6 小时定时触发，以及在 Actions 页面手动触发。第一次使用时，需要在仓库 **Settings → Pages → Source** 里选择 **GitHub Actions**（本仓库已经设置好）。工作流会根据 Pages 配置自动设置 `SITE_URL` 和 `BASE_PATH`，所以无论是项目地址、用户站点还是自定义域名，都不用改代码。
 
-- **Sources fail independently.** Repositories, events and the contribution calendar are fetched separately; if one fails, its saved copy is kept and the rest still refresh.
-- **Builds work offline.** A build without network shows real (if older) data. Sample data appears only when no username is set.
-- **Push events are enriched.** GitHub's events API no longer lists commits in push events, so the newest pushes get their commit count and message from the compare API. The result is cached by event id.
-- **The calendar matches your profile.** With a token, contributions come from the GraphQL calendar, exactly as on your GitHub profile. Without one, they're counted from public events and merged with the saved days.
+要部署到其他平台（Vercel、Netlify、Cloudflare Pages），运行 `npm run build`，发布 `dist/` 目录，并把 `SITE_URL` 设成网站的公开地址；只有不部署在根路径时才需要设置 `BASE_PATH`。
 
-In the browser, `src/scripts/live.ts` polls the public events API politely:
+## 修改内容
 
-- ETags, with GitHub's `X-Poll-Interval` respected
-- paused while the tab is hidden
-- backs off when the anonymous rate limit runs low
+- **个人信息**：`src/site.config.ts`（姓名、首页标题、简介、关于页、链接、GitHub 用户名、邮箱）。
+- **仓库说明**：`src/content/projects.yaml`（多语言描述、精选顺序、隐藏的仓库）。
+- **文章**：放在 `src/content/posts/{en,zh,ja}/`，不同语言文件夹里的同名文件互为译文。`src/content/posts/en/writing-posts-on-this-site.mdx` 演示了所有排版元素（草稿，只在 `npm run dev` 中可见）。
 
-New activity is folded into the pulse, the latest-activity line and the repository table.
+  ```yaml
+  ---
+  title: 恰好卖出十件
+  description: 用于列表和分享预览的一两句话。
+  date: 2026-10-30
+  tags: [Java, MySQL]
+  pinned: true          # 可选：在首页置顶
+  draft: true           # 可选：只在开发环境显示
+  project: orderpilot   # 可选：文末链接到对应的项目详解
+  ---
+  ```
 
-The username lives in `src/site.config.ts`. Repository descriptions in other languages, featured order and hidden repositories are set in `src/content/projects.yaml`.
+- **项目详解**：在 `src/work/` 新建一个文件（结构参考 `types.ts`），再到 `src/work/index.ts` 里登记；截图放在 `src/assets/work/`，构建时会自动缩放和转换格式。
 
-## Content
-
-### Posts
-
-One folder per language: `src/content/posts/{en,zh,ja}/`. A file with the same name in another folder is its translation. Untranslated posts still appear in every language's list, marked with their language.
-
-```yaml
----
-title: Selling exactly ten
-description: One or two sentences for lists and link previews.
-date: 2026-10-30
-updated: 2026-11-02   # optional
-tags: [Java, MySQL]
-pinned: true          # optional: first on the home page
-draft: true           # optional: only visible in `npm run dev`
-project: orderpilot   # optional: links the case study at the end
----
-```
-
-In MDX you can use `<Callout type="tip" title="…">` and `<Figure src={image} caption="…" />` (or put an inline SVG inside `<Figure>`). Code fences accept a `title="path/to/file.ts"`, line ranges like `{3-5}`, and `// [!code highlight]`, `// [!code ++]`, `// [!code --]` markers. Root-relative links (`/projects/orderpilot/`) are rewritten to include the deploy sub-path.
-
-`src/content/posts/en/writing-posts-on-this-site.mdx` is a draft reference of every formatting element; run `npm run dev` to see it.
-
-### Case studies
-
-Each case study is a typed file in `src/work/` (see `types.ts`). Every string is written in all three languages, and the type checker reports any missing translation. A case study holds:
-
-- the summary, metrics, problems and stack
-- the architecture diagram: nodes on a grid, edges between them, and the "traces" that play a request through it
-- which demo to show
-
-To add one, write a file next to the others and list it in `src/work/index.ts`. Screenshots live in `src/assets/work/` and are resized and converted at build time.
-
-### Personal details
-
-`src/site.config.ts` holds your name, the home page headline and tagline, the availability line, the About page text, links and the toolbox strip. Set `email` there to show an email button in the footer and on the About page.
-
-## Assets
-
-Everything visual is drawn in code: the wordmark, icons, diagrams, link previews and the activity graphics. Two optional files are picked up automatically:
-
-| File | Size | Where it appears |
-| --- | --- | --- |
-| `src/assets/portrait.jpg` | 4:5, at least 960 × 1200 | About page, beside "Who I am" |
-| `public/og/default.png` | 1200 × 630 | Not needed: link previews are generated per page |
-
-## Project structure
+## 目录结构
 
 ```
 src/
-  pages/          routes; [lang]/ holds the /zh/ and /ja/ versions; og/ generates link previews
-  views/          page templates shared by every language
-  components/     UI; work/ has the diagram, demos and case-study cards
-  work/           case-study content (typed, trilingual)
-  content/        posts and projects.yaml
-  data/           github.json, written by scripts/fetch-github.mjs
-  i18n/           languages, URL helpers and all interface text
-  lib/            posts, GitHub data, formatting, OG image rendering
-  scripts/        browser code: motion, live data, search, diagram, UI
-  styles/         tokens, global styles, article typography
-scripts/          fetch-github, copy-fonts, new-post, make-icons
+  pages/        路由；[lang]/ 是 /zh/ 与 /ja/ 版本，og/ 生成分享预览图
+  views/        各语言共用的页面模板
+  components/   界面组件；work/ 是架构图、演示和项目卡片
+  work/         项目详解内容（带类型，三种语言）
+  content/      文章与 projects.yaml
+  data/         github.json，由 scripts/fetch-github.mjs 生成
+  i18n/         语言配置、URL 工具和全部界面文案
+  lib/          文章、GitHub 数据、格式化、OG 图片渲染
+  scripts/      浏览器端脚本：动效、实时数据、搜索、架构图、界面交互
+  styles/       设计令牌、全局样式、文章排版
+scripts/        fetch-github、copy-fonts、new-post、make-icons
 ```
-
-## Design notes
-
-- **One accent, used only for meaning.** White paper, graphite ink and one ink-blue mark the live signal, links, focus and the current step. Red appears only when something is refused or oversold.
-- **Signature.** Three bars from the activity pulse form the wordmark, the favicon, the link previews and the full stop of the headline.
-- **Rail layout.** A narrow column names each section with a mono index; the wide column holds the content, like a technical manual.
-- **Type.** Schibsted Grotesk for interface and display, Newsreader for reading, JetBrains Mono for labels and code. Chinese and Japanese use system sans for the interface and Noto Serif for articles, with no negative tracking and taller lines.
-- **Motion.** Large movements ease out on an exponential curve and never block reading. Smooth scrolling is on only for a mouse or trackpad, and everything respects reduced motion.
