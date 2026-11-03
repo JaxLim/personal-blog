@@ -2,39 +2,39 @@
 
 # personal-blog
 
-My portfolio and technical blog, live at [jaxlim.github.io/personal-blog](https://jaxlim.github.io/personal-blog/).
+A personal space for notes on backend architecture, frontend interfaces and independent software development, live at [jaxlim.github.io/personal-blog](https://jaxlim.github.io/personal-blog/).
 
-The site presents case studies of systems I have built, technical writing, and my GitHub activity, kept up to date. It is available in English, Simplified Chinese and Japanese. It is built with [Astro](https://astro.build) and TypeScript and outputs static HTML: no server, no tracking.
+It holds write-ups of my open-source projects on GitHub, dev notes and technical articles, and my GitHub activity, kept up to date. It is available in English, Simplified Chinese and Japanese. It is built with [Astro](https://astro.build) and TypeScript and outputs static HTML: no server, no tracking.
 
 ![Home page](docs/screenshots/home.png)
 
 ## Status
 
 - **Live**: deployed to GitHub Pages by GitHub Actions, rebuilt on every push to `main` and every six hours.
-- **Content**: two case studies ([OrderPilot](https://github.com/JaxLim/OrderPilot) and [OperationAgent](https://github.com/JaxLim/OperationAgent)); two articles, each in English, Chinese and Japanese; plus a formatting-reference draft that is only visible in local development.
+- **Content**: two project write-ups ([OrderPilot](https://github.com/JaxLim/OrderPilot) and [OperationAgent](https://github.com/JaxLim/OperationAgent)); two articles, each in English, Chinese and Japanese; plus a formatting-reference draft that is only visible in local development.
 - **Optional, not configured yet**: the footer email link (hidden while `email` is empty) and the About-page portrait (hidden while `src/assets/portrait.jpg` doesn't exist).
 
 ## Features
 
 | Area | What it includes |
 | --- | --- |
-| Case studies | The hard problems and the tests behind them, an interactive architecture diagram (select a part, or play a request through the system), and a demo: an oversell lab for OrderPilot (forty buyers, ten units) and a security-gate console for OperationAgent |
+| Project write-ups | The main problems and the tests behind them, an interactive architecture diagram (select a part, or play a request through the system), and a demo: an oversell lab for OrderPilot (forty buyers, ten units) and a security-gate console for OperationAgent |
 | Articles | Table of contents with scroll spy, minutes-left counter, code blocks with file titles, highlights, diffs and a copy button, footnote previews, zoomable figures, previous/next links |
 | GitHub activity | Contribution calendar (the "pulse" on the home page), latest push with its commit message, every public repository with sorting and a language filter; open pages keep themselves current |
 | Languages | Separate URLs (`/`, `/zh/`, `/ja/`), a remembered choice, `hreflang`, a sitemap and an RSS feed per language, typography tuned for CJK |
-| Link previews | An Open Graph image is generated at build time for every page, article and case study, in each language |
+| Link previews | An Open Graph image is generated at build time for every page, article and project write-up, in each language |
 | Motion | Smooth scrolling, scroll reveals and page transitions, all turned off under `prefers-reduced-motion` |
 
-| Case study · architecture diagram | Article page |
+| Project write-up · architecture diagram | Article page |
 | --- | --- |
-| ![Interactive architecture diagram in a case study](docs/screenshots/architecture.png) | ![Article page](docs/screenshots/post.png) |
+| ![Interactive architecture diagram in a project write-up](docs/screenshots/architecture.png) | ![Article page](docs/screenshots/post.png) |
 
-![Selected work on the home page](docs/screenshots/work.png)
+![Featured projects on the home page](docs/screenshots/work.png)
 
 ## Technical overview
 
 - **Framework**: Astro 7 (static output) + TypeScript; articles in Markdown / MDX, highlighted with Shiki.
-- **Content**: articles are an Astro content collection (`src/content/posts/{en,zh,ja}/`). Case studies are typed TypeScript files (`src/work/`) where every string is written in all three languages, so the type checker reports any missing translation.
+- **Content**: articles are an Astro content collection (`src/content/posts/{en,zh,ja}/`). Project write-ups are typed TypeScript files (`src/work/`) where every string is written in all three languages, so the type checker reports any missing translation.
 - **GitHub data**: `scripts/fetch-github.mjs` runs before each build and writes `src/data/github.json`, which is committed on purpose. Repositories, events and the contribution calendar are fetched separately; if one source fails its saved copy is kept, so builds also work offline. In the browser, `src/scripts/live.ts` polls the public events API, respecting ETags and `X-Poll-Interval`, and pauses while the tab is hidden.
 - **Generated images**: link previews are drawn with satori and rendered to PNG with `@resvg/resvg-js`.
 - **Fonts**: Schibsted Grotesk, Newsreader and JetBrains Mono, with Noto Serif for Chinese and Japanese articles; all self-hosted through Fontsource.
@@ -95,11 +95,11 @@ To host elsewhere (Vercel, Netlify, Cloudflare Pages), run `npm run build`, publ
   tags: [Java, MySQL]
   pinned: true          # optional: first on the home page
   draft: true           # optional: only visible in development
-  project: orderpilot   # optional: links the case study at the end
+  project: orderpilot   # optional: links the project write-up at the end
   ---
   ```
 
-- **Case studies**: add a file in `src/work/` (see `types.ts`) and list it in `src/work/index.ts`. Screenshots go in `src/assets/work/` and are resized and converted at build time.
+- **Project write-ups**: add a file in `src/work/` (see `types.ts`) and list it in `src/work/index.ts`. Screenshots go in `src/assets/work/` and are resized and converted at build time.
 
 ## Project structure
 
@@ -107,8 +107,8 @@ To host elsewhere (Vercel, Netlify, Cloudflare Pages), run `npm run build`, publ
 src/
   pages/        routes; [lang]/ holds the /zh/ and /ja/ versions; og/ generates link previews
   views/        page templates shared by every language
-  components/   UI; work/ has the diagram, demos and case-study cards
-  work/         case-study content (typed, trilingual)
+  components/   UI; work/ has the diagram, demos and project cards
+  work/         project write-ups (typed, trilingual)
   content/      articles and projects.yaml
   data/         github.json, written by scripts/fetch-github.mjs
   i18n/         languages, URL helpers and all interface text

@@ -18,14 +18,14 @@ export const orderpilot: CaseStudy = {
   motif: 'ledger',
   demo: 'oversell',
   tagline: {
-    en: 'A multi-tenant order and inventory SaaS where stock can’t oversell, retries can’t double-charge, and the AI copilot can’t invent a number.',
-    zh: '一个多租户订单与库存 SaaS：库存不会超卖，重试不会重复扣款，AI 助手也不会编造数字。',
+    en: 'A multi-tenant order and inventory SaaS, built around three problems: overselling under concurrency, duplicate charges on retry, and an AI assistant that answers from real data.',
+    zh: '一个多租户订单与库存 SaaS，重点处理三个问题：并发下的超卖、重试导致的重复扣款，以及让 AI 助手基于真实数据回答。',
     ja: '在庫が売り越されず、リトライで二重課金されず、AI コパイロットが数字をでっち上げない、マルチテナントの受注・在庫 SaaS。',
   },
   summary: [
     {
       en: 'OrderPilot is a small product with the hard parts left in. A Spring Boot modular monolith takes orders for several companies at once, reserves stock under heavy concurrency, takes payments, cancels unpaid orders on time and notifies people when things change. A Vue 3 dashboard and an AI copilot sit on top.',
-      zh: 'OrderPilot 规模不大，但该有的难点一个都没落下。一个 Spring Boot 模块化单体同时服务多家公司：在高并发下预占库存、收款、按时取消没付款的订单，状态一有变化就发通知。上层是 Vue 3 管理后台和一个 AI 经营助手。',
+      zh: 'OrderPilot 规模不大，但保留了真实业务中的主要难点。一个 Spring Boot 模块化单体同时服务多家公司：在高并发下预占库存、收款、按时取消没付款的订单，状态一有变化就发通知。上层是 Vue 3 管理后台和一个 AI 经营助手。',
       ja: 'OrderPilot は、難しい部分をあえて残した小さなプロダクトです。Spring Boot のモジュラーモノリスが複数の企業の注文を同時に受け付け、高い同時実行下で在庫を引き当て、決済を処理し、未払いの注文を期限どおりにキャンセルし、状態が変わるたびに通知します。その上に Vue 3 のダッシュボードと AI コパイロットがあります。',
     },
     {
@@ -74,7 +74,7 @@ export const orderpilot: CaseStudy = {
       },
       solution: {
         en: 'An Idempotency-Key header claimed with Redis SET NX, the response stored for replay, and a unique key in MySQL as the last line of defence when Redis is down.',
-        zh: '请求带上 Idempotency-Key，用 Redis SET NX 占位，并把响应存下来，重复请求直接返回同一结果；万一 Redis 挂了，MySQL 的唯一索引是最后一道防线。',
+        zh: '请求带上 Idempotency-Key，用 Redis SET NX 占位，并把响应存下来，重复请求直接返回同一结果；Redis 不可用时，MySQL 的唯一索引是最后一道防线。',
         ja: 'Idempotency-Key ヘッダーを Redis の SET NX で確保し、レスポンスを保存して再送時に返します。Redis が落ちていても、MySQL のユニークキーが最後の防衛線になります。',
       },
       proof: 'IdempotencyIT',
@@ -125,7 +125,7 @@ export const orderpilot: CaseStudy = {
       title: { en: 'An assistant that makes numbers up', zh: '会编造数字的 AI 助手', ja: '数字を作ってしまうアシスタント' },
       problem: {
         en: 'A language model asked about revenue will happily produce a plausible figure.',
-        zh: '问大模型营收多少，它张口就能给你一个像模像样的数字。',
+        zh: '直接问大模型营收是多少，它很可能给出一个看似合理、实则凭空生成的数字。',
         ja: '売上を聞かれた言語モデルは、もっともらしい数字を平気で答えます。',
       },
       solution: {
@@ -156,14 +156,14 @@ export const orderpilot: CaseStudy = {
     width: 1180,
     height: 546,
     nodes: [
-      { id: 'spa', x: C[0], y: R[2], label: 'Vue 3 SPA', tone: 'client', sub: { en: 'dashboard · EN / 中文', zh: '管理后台 · 中英双语', ja: 'ダッシュボード · 英中' }, detail: { en: 'The dashboard: orders, inventory, payments, team and the copilot. It hides what a role can’t do, but the server is the authority.', zh: '管理后台：订单、库存、支付、团队和 AI 助手。界面会把当前角色没权限的功能藏起来，但最终说了算的是服务端。', ja: '注文・在庫・決済・チーム・コパイロットを扱うダッシュボード。権限のない操作は画面から隠しますが、判断するのはあくまでサーバーです。' } },
+      { id: 'spa', x: C[0], y: R[2], label: 'Vue 3 SPA', tone: 'client', sub: { en: 'dashboard · EN / 中文', zh: '管理后台 · 中英双语', ja: 'ダッシュボード · 英中' }, detail: { en: 'The dashboard: orders, inventory, payments, team and the copilot. It hides what a role can’t do, but the server is the authority.', zh: '管理后台：订单、库存、支付、团队和 AI 助手。界面会隐藏当前角色没有权限的功能，但最终由服务端判断。', ja: '注文・在庫・決済・チーム・コパイロットを扱うダッシュボード。権限のない操作は画面から隠しますが、判断するのはあくまでサーバーです。' } },
       { id: 'api', x: C[1], y: R[2], label: 'API', tone: 'core', sub: { en: 'Spring Security · JWT', zh: 'Spring Security · JWT', ja: 'Spring Security · JWT' }, detail: { en: 'Stateless JWT with a deny-list for logout, permission-based RBAC, rate limits, and the tenant taken from the token, never from a header.', zh: '无状态 JWT（注销时加入黑名单）、基于权限的 RBAC、限流；租户只从令牌中取得，绝不从请求头读取。', ja: 'ログアウト用の拒否リスト付きステートレス JWT、権限ベースの RBAC、レート制限。テナントはヘッダーではなく必ずトークンから取得します。' } },
       { id: 'catalog', x: C[2], y: R[0], label: 'catalog', sub: { en: 'products', zh: '商品', ja: '商品' }, detail: { en: 'Products, served through a Redis cache-aside with TTL jitter, null sentinels and delete-after-commit invalidation. Stock is never cached.', zh: '商品数据走 Redis 旁路缓存：TTL 加随机抖动、空值占位防穿透、事务提交后再删缓存。库存永远不进缓存。', ja: '商品データ。TTL のジッター、null センチネル、コミット後の削除による Redis キャッシュアサイドで配信します。在庫は決してキャッシュしません。' } },
       { id: 'order', x: C[2], y: R[1], label: 'order', sub: { en: 'state machine', zh: '状态机', ja: '状態機械' }, detail: { en: 'The order state machine. Transitions are checked in Java for readable errors and again in SQL, so racing transitions resolve to exactly one winner.', zh: '订单状态机。状态流转先在 Java 里校验，好给出清楚的报错；SQL 里再校验一次，并发的流转只会有一个成功。', ja: '注文の状態機械。遷移はわかりやすいエラーのために Java で検証し、さらに SQL でも検証するので、競合した遷移は必ず一方だけが成功します。' } },
       { id: 'inventory', x: C[2], y: R[2], label: 'inventory', sub: { en: 'atomic reserve', zh: '原子预占', ja: '原子的な引当' }, detail: { en: 'Available and reserved stock with a CHECK (available ≥ 0). Every change is a single conditional UPDATE and is appended to a movement ledger.', zh: '可用库存与预占库存，带 CHECK (available ≥ 0) 约束。每次变更都是一条条件 UPDATE，并追加写入库存流水。', ja: '引当可能数と引当済み数を CHECK (available ≥ 0) 付きで管理。変更はすべて条件付き UPDATE 一文で行い、入出庫台帳に追記します。' } },
       { id: 'payment', x: C[2], y: R[3], label: 'payment', sub: { en: '3 steps · refunds', zh: '三步支付 · 退款', ja: '3 ステップ · 返金' }, detail: { en: 'Lock and record a pending payment, call the gateway outside any transaction, then compare-and-set. No database lock is held during network latency.', zh: '先加锁并记录待支付，再在事务之外调用支付网关，最后做 CAS 更新。网络等待期间不持有任何数据库锁。', ja: 'ロックして保留中の支払いを記録し、トランザクションの外でゲートウェイを呼び、最後に CAS で確定します。ネットワーク待ちの間、DB ロックは一切保持しません。' } },
       { id: 'ai', x: C[2], y: R[4], label: 'ai', sub: { en: 'copilot', zh: 'AI 助手', ja: 'コパイロット' }, detail: { en: 'A Spring AI ChatClient with read-only @Tool methods bound to the caller’s tenant, per-user rate limits, and an offline analyst fallback.', zh: 'Spring AI ChatClient，@Tool 方法全部只读并绑定调用者的租户，按用户限流，并有离线分析器兜底。', ja: '呼び出し元テナントに束縛した読み取り専用の @Tool を持つ Spring AI ChatClient。ユーザーごとのレート制限と、オフラインアナリストへのフォールバック付き。' } },
-      { id: 'redis', x: C[3], y: R[0], label: 'Redis 7', tone: 'store', sub: { en: 'cache · idempotency', zh: '缓存 · 幂等', ja: 'キャッシュ · 冪等性' }, detail: { en: 'An optimisation, never the source of truth: catalog cache, idempotency keys, the JWT deny-list and rate limits. Every path degrades gracefully if it is down.', zh: '只用来提速，不当数据源：商品缓存、幂等键、JWT 黑名单和限流。Redis 挂了，每条链路都能平稳降级。', ja: 'あくまで最適化で、正のデータではありません。商品キャッシュ、冪等キー、JWT 拒否リスト、レート制限。停止してもすべての経路が穏やかに劣化します。' } },
+      { id: 'redis', x: C[3], y: R[0], label: 'Redis 7', tone: 'store', sub: { en: 'cache · idempotency', zh: '缓存 · 幂等', ja: 'キャッシュ · 冪等性' }, detail: { en: 'An optimisation, never the source of truth: catalog cache, idempotency keys, the JWT deny-list and rate limits. Every path degrades gracefully if it is down.', zh: '只用来提速，不当数据源：商品缓存、幂等键、JWT 黑名单和限流。Redis 不可用时，各条链路都能平稳降级。', ja: 'あくまで最適化で、正のデータではありません。商品キャッシュ、冪等キー、JWT 拒否リスト、レート制限。停止してもすべての経路が穏やかに劣化します。' } },
       { id: 'mysql', x: C[3], y: R[2], label: 'MySQL 8.4', tone: 'store', sub: { en: 'state + outbox, one TX', zh: '状态与 Outbox 同事务', ja: '状態 + アウトボックス' }, detail: { en: 'The source of truth. Orders, stock, payments and outbox events commit together. Flyway migrations; every tenant table carries tenant_id.', zh: '唯一的数据源。订单、库存、支付和 Outbox 事件一起提交。使用 Flyway 迁移，每张租户表都带 tenant_id。', ja: '唯一の正のデータ。注文・在庫・決済・アウトボックスのイベントをまとめてコミットします。Flyway でマイグレーションし、テナントテーブルにはすべて tenant_id があります。' } },
       { id: 'llm', x: C[3], y: R[4], label: 'LLM', tone: 'external', sub: { en: 'DeepSeek · OpenAI API', zh: 'DeepSeek · OpenAI 兼容', ja: 'DeepSeek · OpenAI 互換' }, detail: { en: 'Chooses which tool to call and writes the answer. It never sees credentials and never chooses the tenant.', zh: '负责决定调哪个工具、怎么组织回答。它看不到任何凭据，也没法选择租户。', ja: 'どのツールを呼ぶかを選び、回答を書きます。認証情報を見ることも、テナントを選ぶこともありません。' } },
       { id: 'relay', x: C[4], y: R[2], label: 'Outbox relay', sub: { en: 'confirms · SKIP LOCKED', zh: '确认投递 · SKIP LOCKED', ja: '配信確認 · SKIP LOCKED' }, detail: { en: 'Every 500 ms, claims a batch with FOR UPDATE SKIP LOCKED and publishes with confirms and mandatory returns. Marked sent only when acknowledged and routed.', zh: '每 500 毫秒用 FOR UPDATE SKIP LOCKED 认领一批事件，以 publisher confirms 和 mandatory 方式投递。只有被确认且成功路由后才标记为已发送。', ja: '500 ミリ秒ごとに FOR UPDATE SKIP LOCKED で一括取得し、publisher confirms と mandatory 付きで配信します。確認され、ルーティングされた場合にだけ送信済みにします。' } },

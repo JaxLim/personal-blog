@@ -44,7 +44,7 @@ const jsonLd = {
 <Base locale={locale} jsonLd={jsonLd}>
   <section class="hero page" aria-labelledby="hero-title">
     <div class="hero__top" data-reveal="fade">
-      <p class="label"><span translate="no">{site.name}</span> — {t.meta.role}</p>
+      <p class="label"><span translate="no">{site.name}</span> — {site.label[locale]}</p>
       {
         status && (
           <p class="hero__status label">

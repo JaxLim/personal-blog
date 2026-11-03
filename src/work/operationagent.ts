@@ -14,19 +14,19 @@ export const operationagent: CaseStudy = {
   motif: 'layers',
   demo: 'gate',
   tagline: {
-    en: 'A desktop AI agent built security-first, where the operating system, not the prompt, decides what the agent can touch.',
-    zh: '一个安全优先的桌面 AI Agent：Agent 能碰什么，由操作系统说了算，而不是提示词。',
+    en: 'A security-first desktop AI agent. What the agent can access is enforced by the operating system, not by the prompt.',
+    zh: '一个安全优先的桌面 AI Agent：Agent 能访问什么，由操作系统来限制，而不是依赖提示词。',
     ja: 'セキュリティを最優先に設計したデスクトップ AI エージェント。エージェントが何に触れられるかを決めるのは、プロンプトではなく OS です。',
   },
   summary: [
     {
       en: 'OperationAgent is an Electron desktop app for running a coding agent on your own machine. The hard question isn’t how to call a model. It’s what happens when the model, a web page or a tool description is hostile. The answer here is an architecture with one place that authorises anything, and an agent process the operating system keeps on a short leash.',
-      zh: 'OperationAgent 是一个在本机运行编程 Agent 的 Electron 桌面应用。真正难的不是怎么调用模型，而是模型、网页或工具描述本身不怀好意时该怎么办。我的答案是这样一套架构：所有授权只在一个地方发生，Agent 进程则被操作系统牢牢管住。',
+      zh: 'OperationAgent 是一个在本机运行编程 Agent 的 Electron 桌面应用。真正难的不是怎么调用模型，而是模型、网页或工具描述本身不怀好意时该怎么办。我的做法是：所有授权都集中在一个地方，Agent 进程则由操作系统严格限制。',
       ja: 'OperationAgent は、手元のマシンでコーディングエージェントを動かすための Electron デスクトップアプリです。難しいのはモデルの呼び方ではありません。モデルや Web ページ、ツールの説明そのものが悪意を持っていたらどうなるか、です。その答えが、認可を行う場所を一つに絞り、エージェントのプロセスを OS が短い鎖でつなぐアーキテクチャです。',
     },
     {
       en: 'It is being built in gated phases. On Windows x64, the control plane, persistence, installer and the worker-isolation gate have all passed real acceptance. The agent itself stays switched off until its loop and the read-only gate are in place, and the app says so plainly rather than running unprotected.',
-      zh: '项目分阶段推进，每个阶段都要过门禁。在 Windows x64 上，控制面、持久化、安装包和 Worker 隔离门禁都已通过真实验收。Agent 循环和只读门禁完成之前，Agent 本身保持关闭；应用会如实告诉你这一点，而不是在没有保护的情况下硬跑。',
+      zh: '项目分阶段推进，每个阶段都要过门禁。在 Windows x64 上，控制面、持久化、安装包和 Worker 隔离门禁都已通过真实验收。Agent 循环和只读门禁完成之前，Agent 本身保持关闭；应用会如实说明这一点，而不是在没有保护的情况下运行。',
       ja: '開発はゲート付きのフェーズで進めています。Windows x64 では、コントロールプレーン、永続化、インストーラー、Worker 隔離のゲートが実機の受け入れ試験に合格しました。エージェント本体は、ループと読み取り専用のゲートが揃うまでオフのままで、保護なしで動かす代わりに、アプリはそのことを正直に表示します。',
     },
   ],
@@ -51,7 +51,7 @@ export const operationagent: CaseStudy = {
       title: { en: 'Prompts are not a security boundary', zh: '提示词不是安全边界', ja: 'プロンプトはセキュリティ境界ではない' },
       problem: {
         en: 'Workspace files, web pages and tool output can all carry instructions. An agent that can be talked into anything will eventually be.',
-        zh: '工作区文件、网页和工具输出都可能夹带指令。一个什么都能被说动的 Agent，迟早会被人说动。',
+        zh: '工作区文件、网页和工具输出都可能夹带指令。如果 Agent 什么指令都会照做，迟早会被利用。',
         ja: 'ワークスペースのファイルも Web ページもツールの出力も、指示を紛れ込ませられます。何でも言いくるめられるエージェントは、いずれ必ず言いくるめられます。',
       },
       solution: {
@@ -107,7 +107,7 @@ export const operationagent: CaseStudy = {
       title: { en: 'Claiming more than you have proven', zh: '宣称的比证明的多', ja: '証明した以上のことを主張する' },
       problem: {
         en: 'It is tempting to ship the agent and harden it later.',
-        zh: '先把 Agent 上线、回头再补安全，这种诱惑一直都在。',
+        zh: '先让 Agent 跑起来、之后再补安全，是一种很常见的做法。',
         ja: 'まずエージェントを出して、堅牢化は後で。そうしたくなるものです。',
       },
       solution: {
@@ -160,10 +160,10 @@ export const operationagent: CaseStudy = {
       { id: 'worker', x: C[3], y: R[4], label: 'Agent worker', sub: { en: 'AppContainer + Job', zh: 'AppContainer + Job', ja: 'AppContainer + Job' }, detail: { en: 'The agent loop: reasoning, planning and tool requests. A direct child of the control plane over one inherited pipe, with no file, database, terminal or network access of its own.', zh: 'Agent 循环：推理、规划和工具请求。它是控制面的直接子进程，只通过一条继承的管道通信，自身没有文件、数据库、终端或网络权限。', ja: 'エージェントのループ（推論、計画、ツールの要求）。コントロールプレーンの直接の子プロセスで、継承した一本のパイプだけでつながり、自前のファイル・DB・端末・ネットワークへのアクセスは持ちません。' } },
       { id: 'gateway', x: C[4], y: R[0], label: 'Model gateway', sub: { en: 'credentials stay here', zh: '凭据只留在这里', ja: '認証情報はここだけ' }, detail: { en: 'Uses provider credentials on the worker’s behalf and adapts between providers. Keys never reach the worker, the renderer or the logs.', zh: '代 Worker 持有和使用供应商凭据，并适配不同的模型供应商。密钥绝不会出现在 Worker、渲染进程或日志里。', ja: 'Worker の代わりにプロバイダーの認証情報を使い、プロバイダー間の差を吸収します。鍵が Worker やレンダラー、ログに届くことはありません。' } },
       { id: 'llm', x: C[5], y: R[0], label: 'Model provider', tone: 'external', sub: { en: 'untrusted output', zh: '输出不可信', ja: '出力は信頼しない' }, detail: { en: 'Treated like any other untrusted input. Its output can request tools; it can never grant them.', zh: '和其他不可信输入一视同仁。它的输出可以申请调用工具，但永远批准不了。', ja: 'ほかの信頼できない入力と同じように扱います。出力でツールを要求することはできても、許可することはできません。' } },
-      { id: 'router', x: C[4], y: R[2], label: 'Tool router', sub: { en: 'validate · authorise', zh: '校验 · 授权', ja: '検証 · 認可' }, detail: { en: 'Routes by static tool class and capability whitelist. A language model never decides whether something is dangerous.', zh: '按静态工具类别和能力白名单路由。危不危险，从来不让大模型来判断。', ja: '静的なツール種別と能力のホワイトリストでルーティングします。危険かどうかを言語モデルに判断させることはありません。' } },
+      { id: 'router', x: C[4], y: R[2], label: 'Tool router', sub: { en: 'validate · authorise', zh: '校验 · 授权', ja: '検証 · 認可' }, detail: { en: 'Routes by static tool class and capability whitelist. A language model never decides whether something is dangerous.', zh: '按静态工具类别和能力白名单路由。是否危险，不交给大模型判断。', ja: '静的なツール種別と能力のホワイトリストでルーティングします。危険かどうかを言語モデルに判断させることはありません。' } },
       { id: 'read', x: C[5], y: R[1], label: 'Read adapter', sub: { en: 'authorised, read-only', zh: '经授权，只读', ja: '認可済み · 読み取り専用' }, detail: { en: 'Read-only access inside an authorised workspace, and read-only git queries. Never shell string concatenation.', zh: '在已授权的工作区内只读访问，以及只读的 Git 查询。绝不拼接 Shell 字符串执行。', ja: '認可されたワークスペース内での読み取りと、読み取り専用の Git 操作。シェル文字列を連結して実行することはありません。' } },
       { id: 'sandbox', x: C[5], y: R[2], label: 'Sandbox launcher', sub: { en: 'short-lived OS sandbox', zh: '用完即毁的 OS 沙箱', ja: '短命な OS サンドボックス' }, detail: { en: 'Builds an OS-sandboxed process from an approved execution profile, with resource limits and process-group cleanup. Unsupported downgrades are refused.', zh: '按已批准的执行配置创建 OS 沙箱进程，设置资源上限，并按进程组统一回收。不支持的降级一律拒绝。', ja: '承認済みの実行プロファイルから OS サンドボックス付きのプロセスを作り、リソース制限とプロセスグループ単位の後始末を行います。対応していない格下げは拒否します。' } },
-      { id: 'mcp', x: C[5], y: R[3], label: 'MCP host', tone: 'external', sub: { en: 'restricted connections', zh: '受控连接', ja: '制限付き接続' }, detail: { en: 'Discovers and calls MCP tools through controlled connections. It never trusts a server’s description of its own permissions.', zh: '通过受控连接发现和调用 MCP 工具。MCP Server 自称有什么权限，一概不信。', ja: '制御された接続で MCP ツールを発見し、呼び出します。サーバーが自己申告する権限は決して信用しません。' } },
+      { id: 'mcp', x: C[5], y: R[3], label: 'MCP host', tone: 'external', sub: { en: 'restricted connections', zh: '受控连接', ja: '制限付き接続' }, detail: { en: 'Discovers and calls MCP tools through controlled connections. It never trusts a server’s description of its own permissions.', zh: '通过受控连接发现和调用 MCP 工具。不采信 MCP Server 对自身权限的描述。', ja: '制御された接続で MCP ツールを発見し、呼び出します。サーバーが自己申告する権限は決して信用しません。' } },
     ],
     edges: [
       { id: 'renderer-preload', from: 'renderer', to: 'preload' },
@@ -197,7 +197,7 @@ export const operationagent: CaseStudy = {
           { edge: 'express-worker', note: { en: 'The control plane starts the worker as its direct child: restricted from its first instruction, one inherited pipe, no listening ports.', zh: '控制面把 Worker 作为直接子进程启动：从执行第一条指令起就受限，只有一条继承来的管道，不监听任何端口。', ja: 'コントロールプレーンが Worker を直接の子として起動します。最初の命令から制限され、継承したパイプは一本だけ、待ち受けポートはありません。' } },
           { edge: 'express-worker', reverse: true, note: { en: 'The worker plans and asks for a tool. The request comes back to the control plane: the only place it can be authorised.', zh: 'Worker 规划好后申请调用工具。请求回到控制面，也就是唯一能做授权的地方。', ja: 'Worker が計画を立ててツールを要求します。リクエストは、認可できる唯一の場所であるコントロールプレーンへ戻ります。' } },
           { edge: 'express-router', note: { en: 'The router validates it against static tool classes and the approval policy.', zh: '路由器按静态的工具类别和审批策略校验请求。', ja: 'ルーターが静的なツール種別と承認ポリシーに照らして検証します。' } },
-          { edge: 'router-sandbox', note: { en: 'A high-risk tool runs in a short-lived OS sandbox. Your approval does not remove the sandbox.', zh: '高风险工具在用完即销毁的 OS 沙箱里运行。你点了批准，沙箱也照样在。', ja: '高リスクのツールは短命な OS サンドボックスで動きます。承認してもサンドボックスは外れません。' } },
+          { edge: 'router-sandbox', note: { en: 'A high-risk tool runs in a short-lived OS sandbox. Your approval does not remove the sandbox.', zh: '高风险工具在用完即销毁的 OS 沙箱里运行。即使用户批准，沙箱依然生效。', ja: '高リスクのツールは短命な OS サンドボックスで動きます。承認してもサンドボックスは外れません。' } },
           { edge: 'express-store', note: { en: 'The result and the audit record are written by the only writer.', zh: '结果和审计记录由唯一有写权限的控制面写入。', ja: '結果と監査記録は、唯一の書き手が書き込みます。' } },
         ],
       },
@@ -237,7 +237,7 @@ export const operationagent: CaseStudy = {
     },
     {
       en: 'Some platform behaviour could only be settled by experiment. The Windows isolation choice came out of a dozen recorded runs, not a design meeting.',
-      zh: '有些平台行为只能靠实验摸清楚。Windows 隔离方案是十几轮有记录的实验跑出来的，不是开会拍板定的。',
+      zh: '有些平台行为只能靠实验摸清楚。Windows 隔离方案来自十几轮有记录的实验，而不是会议上的决定。',
       ja: 'プラットフォームの挙動には実験でしか決められないものがあります。Windows の隔離方式は、設計会議ではなく十数回の記録付きの実験から決まりました。',
     },
     {
