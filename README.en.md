@@ -18,7 +18,7 @@ The site presents case studies of systems I have built, technical writing, and m
 
 | Area | What it includes |
 | --- | --- |
-| Case studies | The hard problems and the tests behind them, an interactive architecture diagram (select a part, or play a request through the system), and a demo: an oversell lab for OrderPilot (forty buyers, ten units) and the worker-isolation gate console for OperationAgent |
+| Case studies | The hard problems and the tests behind them, an interactive architecture diagram (select a part, or play a request through the system), and a demo: an oversell lab for OrderPilot (forty buyers, ten units) and a security-gate console for OperationAgent |
 | Articles | Table of contents with scroll spy, minutes-left counter, code blocks with file titles, highlights, diffs and a copy button, footnote previews, zoomable figures, previous/next links |
 | GitHub activity | Contribution calendar (the "pulse" on the home page), latest push with its commit message, every public repository with sorting and a language filter; open pages keep themselves current |
 | Languages | Separate URLs (`/`, `/zh/`, `/ja/`), a remembered choice, `hreflang`, a sitemap and an RSS feed per language, typography tuned for CJK |

@@ -16,14 +16,14 @@ export const site = {
    */
   headline: {
     en: ['I build software', 'that stays correct', 'under pressure.'],
-    zh: ['构建在压力之下', '依然正确的软件。'],
+    zh: ['我写的软件，', '压力再大也不出错。'],
     ja: ['負荷がかかっても', '正しく動き続ける', 'ソフトウェアを。'],
   } satisfies Localized<string[]>,
 
   /** One or two sentences under the headline. */
   tagline: {
     en: 'I’m Ethan, a software engineer. I design backends that survive concurrency and failure, interfaces that feel finished, and AI tools that never invent a number.',
-    zh: '我是 Ethan，一名软件工程师。我设计能扛住并发与故障的后端、细节完整的界面，以及从不编造数字的 AI 工具。',
+    zh: '我是 Ethan，一名软件工程师。我做扛得住高并发和故障的后端，打磨到位的界面，也做绝不编造数字的 AI 工具。',
     ja: 'ソフトウェアエンジニアの Ethan です。同時実行や障害に耐えるバックエンド、細部まで仕上げたインターフェース、そして数字をでっち上げない AI ツールを設計しています。',
   } satisfies Localized,
 
@@ -33,14 +33,14 @@ export const site = {
    */
   status: {
     en: 'Open to full-time engineering roles',
-    zh: '正在寻找全职工程师职位',
+    zh: '正在寻找全职工程师岗位',
     ja: 'フルタイムのエンジニア職を募集中',
   } satisfies Localized,
 
   /** Used for search engines and link previews. */
   description: {
     en: 'Ethan, software engineer. Case studies of reliable backends and AI agent tooling, technical writing, and live GitHub activity.',
-    zh: '软件工程师 Ethan：可靠后端与 AI Agent 工具的项目案例、技术文章，以及实时 GitHub 动态。',
+    zh: '软件工程师 Ethan 的个人网站：可靠后端与 AI Agent 的项目案例、技术文章，以及 GitHub 实时动态。',
     ja: 'ソフトウェアエンジニア Ethan。信頼性の高いバックエンドと AI エージェントのケーススタディ、技術記事、GitHub のリアルタイムなアクティビティ。',
   } satisfies Localized,
 
@@ -94,8 +94,8 @@ export const site = {
   about: {
     en: {
       intro: [
-        'I’m Ethan, a software engineer who has recently graduated and works independently. I design and build systems end to end, from the database schema and the message flow to the interface and the installer.',
-        'I’m most at home where correctness is hard: concurrency, failure, security boundaries, and AI features that have to stay honest. I like to prove a design with a test that runs against the real thing.',
+        'I’m Ethan, a software engineer. I graduated recently and I’m building projects on my own for now. I take systems from start to finish, from the database schema and the message flow to the interface and the installer.',
+        'I’m most at home where getting it right is hard: concurrency, failure, security boundaries, and AI features that have to stay honest. I like to prove a design with a test that runs against the real thing.',
       ],
       focus: [
         'Backend engineering with Java and Spring Boot: transactions, messaging, caching and multi-tenancy.',
@@ -104,23 +104,23 @@ export const site = {
       ],
       principles: [
         'Write down what must never happen, then test it.',
-        'Prefer one obviously correct statement to a clever system.',
+        'Choose one obviously correct line over a clever system.',
         'Say plainly what isn’t done yet.',
       ],
       now: 'Looking for a full-time engineering role. If you’re hiring, I’d be glad to hear from you.',
     },
     zh: {
       intro: [
-        '我是 Ethan，一名刚毕业、目前独立开发的软件工程师。我从头到尾地设计和构建系统：从数据库表结构和消息流，到界面和安装包。',
-        '我最擅长的是“正确性很难保证”的地方：并发、故障、安全边界，以及必须保持诚实的 AI 功能。我习惯用在真实环境中运行的测试来证明一个设计。',
+        '我是 Ethan，刚毕业不久的软件工程师，目前在独立做项目。从数据库表设计、消息流转，到前端界面和安装包，我习惯把一个系统从头到尾完整做下来。',
+        '我最喜欢啃“不能出错”的硬骨头：并发、故障处理、安全边界，还有不能乱编数据的 AI 功能。一个设计行不行，我更相信对着真实环境跑出来的测试。',
       ],
       focus: [
-        '使用 Java 与 Spring Boot 的后端工程：事务、消息、缓存与多租户。',
-        '使用 TypeScript、Electron、React 和 Vue 的桌面与 Web 应用，注重细节与无障碍。',
-        '基于真实数据、从构造上保证安全的 AI 功能与 Agent 工具。',
+        'Java / Spring Boot 后端开发：事务、消息队列、缓存、多租户。',
+        '用 TypeScript、Electron、React、Vue 开发桌面端和 Web 应用，重视细节和无障碍体验。',
+        '以真实数据为依据、从架构上保证安全的 AI 功能和 Agent 工具。',
       ],
-      principles: ['先写下“绝不能发生什么”，再去测试它。', '宁要一条显然正确的语句，也不要一个精巧的系统。', '还没做完的事，就直说。'],
-      now: '正在寻找全职工程师职位。如果你的团队正在招聘，欢迎与我联系。',
+      principles: ['先写清楚什么事绝对不能发生，再用测试去证明。', '与其设计一套精巧的系统，不如写一行一眼就能看出没问题的代码。', '没做完的，就老老实实说没做完。'],
+      now: '正在找全职的软件工程师工作。如果你们团队在招人，欢迎联系我。',
     },
     ja: {
       intro: [

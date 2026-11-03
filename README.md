@@ -4,26 +4,26 @@
 
 我的个人作品集与技术博客，在线地址：[jaxlim.github.io/personal-blog](https://jaxlim.github.io/personal-blog/)。
 
-网站展示我做过的系统（项目案例）、技术文章，以及实时同步的 GitHub 动态，支持简体中文、英文和日文。基于 [Astro](https://astro.build) 与 TypeScript 构建，输出纯静态 HTML：不需要服务器，也没有任何统计追踪。
+网站里有我做过的项目案例、技术文章，以及实时同步的 GitHub 动态，支持简体中文、英文和日文。整站用 [Astro](https://astro.build) 和 TypeScript 搭建，生成的是纯静态 HTML：不需要服务器，也没有任何访问统计和追踪。
 
 ![首页](docs/screenshots/home-zh.png)
 
 ## 当前状态
 
-- **已上线**：通过 GitHub Actions 部署到 GitHub Pages，每次推送到 `main` 以及每 6 小时自动重新构建一次。
-- **内容**：两个项目案例（[OrderPilot](https://github.com/JaxLim/OrderPilot)、[OperationAgent](https://github.com/JaxLim/OperationAgent)）；两篇文章，均有中、英、日三个版本；另有一篇只在本地开发时可见的排版示例草稿。
-- **可选、尚未配置**：页脚邮箱（`email` 为空时不显示）、关于页的个人照片（`src/assets/portrait.jpg` 不存在时不显示）。
+- **已上线**：通过 GitHub Actions 部署到 GitHub Pages，每次推送到 `main` 时构建，另外每 6 小时自动重建一次。
+- **内容**：两个项目案例（[OrderPilot](https://github.com/JaxLim/OrderPilot)、[OperationAgent](https://github.com/JaxLim/OperationAgent)）；两篇文章，各有中、英、日三个版本；另有一篇排版示例草稿，只在本地开发时可见。
+- **可选项，目前未配置**：页脚邮箱（`email` 为空时不显示）和关于页的个人照片（没有 `src/assets/portrait.jpg` 时不显示）。
 
 ## 功能
 
 | 模块 | 内容 |
 | --- | --- |
-| 项目案例 | 每个案例包含问题与对应测试、可交互的架构图（点选组件，或让一个请求在系统中“走一遍”），以及一个演示：OrderPilot 是“40 个买家抢 10 件库存”的超卖实验，OperationAgent 是 Worker 隔离门禁控制台 |
-| 文章 | 目录与滚动定位、剩余阅读时间、带文件名/高亮/diff/复制按钮的代码块、脚注预览、可放大的图片、上一篇/下一篇 |
-| GitHub 动态 | 贡献日历（首页的活动“脉搏”图）、最近一次推送及其提交信息、全部公开仓库（可排序、按语言筛选）；页面打开期间在浏览器中自动更新 |
-| 多语言 | `/`、`/zh/`、`/ja/` 三套独立 URL，记住语言选择；每种语言有独立的 `hreflang`、sitemap 和 RSS；针对中日文调整了排版 |
-| 分享预览 | 构建时为每个页面、文章和案例生成各语言的 Open Graph 图片 |
-| 动效 | 平滑滚动、滚动渐显、页面切换过渡；系统开启“减少动态效果”时全部关闭 |
+| 项目案例 | 每个案例都讲清楚难点和对应的测试，配有可交互的架构图（点选组件，或播放一个请求在系统里的完整流程），还有一个可以上手的演示：OrderPilot 是“40 个买家抢 10 件库存”的超卖实验，OperationAgent 是安全门禁控制台 |
+| 文章 | 目录随滚动高亮、剩余阅读时间、代码块（文件名、行高亮、diff、一键复制）、脚注预览、可放大的图片、上一篇/下一篇 |
+| GitHub 动态 | 贡献日历（首页的活动“脉搏”图）、最近一次推送和它的提交信息、全部公开仓库（可排序、可按语言筛选）；页面开着时会自动刷新 |
+| 多语言 | `/`、`/zh/`、`/ja/` 三套独立 URL，会记住你选的语言；每种语言都有自己的 `hreflang`、sitemap 和 RSS；中日文排版单独调过 |
+| 分享预览 | 构建时为每个页面、文章和案例生成对应语言的 Open Graph 图片 |
+| 动效 | 平滑滚动、滚动时渐显、页面切换过渡；系统开启“减少动态效果”后全部关闭 |
 
 | 项目案例 · 架构图 | 文章页 |
 | --- | --- |
@@ -34,8 +34,8 @@
 ## 技术概览
 
 - **框架**：Astro 7（静态输出）+ TypeScript，文章使用 Markdown / MDX，代码高亮使用 Shiki。
-- **内容**：文章是 Astro 内容集合（`src/content/posts/{en,zh,ja}/`）；项目案例是带类型的 TypeScript 文件（`src/work/`），每个字符串都要写三种语言，缺少翻译时类型检查会报错。
-- **GitHub 数据**：`scripts/fetch-github.mjs` 在构建前抓取数据，写入 `src/data/github.json`（该文件有意提交到仓库）。仓库、事件和贡献日历分别抓取，任一来源失败都保留旧数据，因此离线也能构建。浏览器端的 `src/scripts/live.ts` 轮询公开事件接口，遵守 ETag 和 `X-Poll-Interval`，标签页隐藏时暂停。
+- **内容**：文章用的是 Astro 内容集合（`src/content/posts/{en,zh,ja}/`）；项目案例是带类型的 TypeScript 文件（`src/work/`），每段文字都要写三种语言，漏了翻译类型检查就会报错。
+- **GitHub 数据**：`scripts/fetch-github.mjs` 在构建前抓取数据，写入 `src/data/github.json`（该文件有意提交到仓库）。仓库、事件和贡献日历分开抓取，哪个失败就沿用哪个的旧数据，所以断网也能构建。浏览器端由 `src/scripts/live.ts` 轮询公开事件接口，遵守 ETag 和 `X-Poll-Interval`，标签页切到后台时暂停。
 - **图片生成**：分享预览图由 satori 绘制、`@resvg/resvg-js` 渲染为 PNG。
 - **字体**：Schibsted Grotesk、Newsreader、JetBrains Mono，中日文正文使用 Noto Serif；全部通过 Fontsource 自托管。
 
@@ -52,7 +52,7 @@ npm run dev
 
 打开 http://localhost:4321 。中文版在 http://localhost:4321/zh/ 。
 
-`npm run dev` 会先复制字体，并在 `src/data/github.json` 超过 30 分钟时刷新 GitHub 数据。没有网络也能启动，只是显示已保存的数据。
+`npm run dev` 会先复制字体；如果 `src/data/github.json` 已超过 30 分钟没更新，还会顺便刷新 GitHub 数据。没有网络也能启动，只是显示之前保存的数据。
 
 ### 常用命令
 
@@ -73,19 +73,19 @@ npm run dev
 | --- | --- |
 | `SITE_URL` | 站点公开地址，用于规范链接、`hreflang`、RSS、sitemap 和分享预览 |
 | `BASE_PATH` | 部署在子路径时设置，例如 `/personal-blog` |
-| `GITHUB_TOKEN` | 无需任何权限的 token。用于获取精确的贡献日历并提高 API 限额，只在构建时使用，不会发送到浏览器 |
+| `GITHUB_TOKEN` | 不需要任何权限的 token，用来获取精确的贡献日历、提高 API 限额。只在构建时使用，不会发到浏览器 |
 
 ## 部署
 
-`.github/workflows/deploy.yml` 会在推送到 `main`、每 6 小时一次，以及在 Actions 页面手动触发时构建并发布到 GitHub Pages。首次使用需在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**（本仓库已设置）。工作流会根据 Pages 配置自动设置 `SITE_URL` 和 `BASE_PATH`，因此项目地址、用户站点和自定义域名都无需改代码。
+`.github/workflows/deploy.yml` 会在三种情况下构建并发布到 GitHub Pages：推送到 `main`、每 6 小时定时触发，以及在 Actions 页面手动触发。第一次使用时，需要在仓库 **Settings → Pages → Source** 里选择 **GitHub Actions**（本仓库已经设置好）。工作流会根据 Pages 配置自动设置 `SITE_URL` 和 `BASE_PATH`，所以无论是项目地址、用户站点还是自定义域名，都不用改代码。
 
-部署到其他平台（Vercel、Netlify、Cloudflare Pages）时：运行 `npm run build`，发布 `dist/` 目录，并把 `SITE_URL` 设为公开地址；只有不在根路径时才需要设置 `BASE_PATH`。
+要部署到其他平台（Vercel、Netlify、Cloudflare Pages），运行 `npm run build`，发布 `dist/` 目录，并把 `SITE_URL` 设成网站的公开地址；只有不部署在根路径时才需要设置 `BASE_PATH`。
 
 ## 修改内容
 
 - **个人信息**：`src/site.config.ts`（姓名、首页标题、简介、关于页、链接、GitHub 用户名、邮箱）。
 - **仓库说明**：`src/content/projects.yaml`（多语言描述、精选顺序、隐藏的仓库）。
-- **文章**：放在 `src/content/posts/{en,zh,ja}/`，不同语言文件夹中同名的文件互为译文。`src/content/posts/en/writing-posts-on-this-site.mdx` 是所有排版元素的示例（草稿，只在 `npm run dev` 中可见）。
+- **文章**：放在 `src/content/posts/{en,zh,ja}/`，不同语言文件夹里的同名文件互为译文。`src/content/posts/en/writing-posts-on-this-site.mdx` 演示了所有排版元素（草稿，只在 `npm run dev` 中可见）。
 
   ```yaml
   ---
@@ -99,7 +99,7 @@ npm run dev
   ---
   ```
 
-- **项目案例**：在 `src/work/` 新建一个文件（结构见 `types.ts`），并在 `src/work/index.ts` 中登记；截图放在 `src/assets/work/`，构建时自动缩放和转换格式。
+- **项目案例**：在 `src/work/` 新建一个文件（结构参考 `types.ts`），再到 `src/work/index.ts` 里登记；截图放在 `src/assets/work/`，构建时会自动缩放和转换格式。
 
 ## 目录结构
 

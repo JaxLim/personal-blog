@@ -15,16 +15,16 @@ OrderPilot:
   featured: true
   description:
     en: Multi-tenant order and inventory SaaS. Spring Boot, Vue 3, MySQL, Redis, RabbitMQ and an AI copilot that only answers from real data.
-    zh: 多租户订单与库存 SaaS。Spring Boot、Vue 3、MySQL、Redis、RabbitMQ，以及只依据真实数据作答的 AI 助手。
+    zh: 多租户订单与库存 SaaS，基于 Spring Boot、Vue 3、MySQL、Redis 和 RabbitMQ，内置一个只按真实数据回答的 AI 助手。
     ja: マルチテナントの受注・在庫 SaaS。Spring Boot、Vue 3、MySQL、Redis、RabbitMQ と、実データだけで答える AI コパイロット。
 OperationAgent:
   featured: true
   description:
-    en: Security-first desktop AI agent. Electron, TypeScript and an isolated worker process, delivered in gated phases.
-    zh: 安全优先的桌面 AI Agent。Electron、TypeScript 与隔离的 Worker 进程，按阶段门禁交付。
+    en: Security-first desktop AI agent built with Electron and TypeScript. The agent runs in an isolated worker process, and each phase ships only after its gate passes.
+    zh: 安全优先的桌面 AI Agent，基于 Electron 和 TypeScript。Agent 运行在隔离的 Worker 进程里，每个阶段都要通过门禁才算完成。
     ja: セキュリティ最優先のデスクトップ AI エージェント。Electron、TypeScript、隔離された Worker プロセスを、ゲート付きのフェーズで開発。
 personal-blog:
   description:
     en: This website. Astro and TypeScript in three languages, with case studies and live GitHub activity.
-    zh: 这个网站本身。基于 Astro 和 TypeScript，支持三种语言，包含项目案例和实时 GitHub 动态。
+    zh: 就是这个网站。用 Astro 和 TypeScript 搭建，支持中、英、日三种语言，包含项目案例和 GitHub 实时动态。
     ja: このサイトそのもの。Astro と TypeScript による 3 言語対応で、ケーススタディと GitHub のリアルタイムなアクティビティを掲載。

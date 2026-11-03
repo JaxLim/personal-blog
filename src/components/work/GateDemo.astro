@@ -1,7 +1,7 @@
 ---
 /**
- * The worker isolation gate, as a console. Start a task the way the app
- * does today and it is refused before anything runs; flip the gate to see
+ * The agent gates, as a console. Start a task the way the app does today
+ * and it is refused before anything runs; open the remaining gates to see
  * the path a verified build unlocks.
  */
 import type { Locale } from '../../i18n/config';
@@ -25,13 +25,15 @@ const common = [
 ];
 const blocked = [
   ...common,
-  ['warn', 'control  worker gate SEC-W01 … not passed on win32-x64'],
+  ['ok', 'control  worker gate SEC-W01 … passed on win32-x64'],
+  ['warn', 'control  agent loop … not built yet'],
   ['dim', 'control  agentReady=false · no worker started'],
-  ['err', '✕ 409 WORKER_ISOLATION_UNAVAILABLE'],
+  ['err', '✕ 503 WORKER_ISOLATION_UNAVAILABLE'],
 ];
 const passed = [
   ...common,
-  ['ok', 'control  worker gate SEC-W01 … passed'],
+  ['ok', 'control  worker gate SEC-W01 … passed on win32-x64'],
+  ['ok', 'control  agent loop and read gate … passed'],
   ['dim', 'launcher AppContainer + Job object · 1 inherited pipe (OWIP/1)'],
   ['dim', 'worker   handshake ok · role=agent · no listening ports'],
   ['ok', '✓ 202 accepted · tools route back through the control plane'],
